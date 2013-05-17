@@ -10,7 +10,7 @@ import time
 from rdc.etl.hash import Hash
 
 EOQ = object()
-QUEUE_MAX_SIZE = 50000
+QUEUE_MAX_SIZE = 8192
 
 class Queue(BaseQueue):
     def __init__(self, maxsize=QUEUE_MAX_SIZE):
