@@ -22,7 +22,7 @@ class DatabaseExtract(Extract):
 
         offset = 0
 
-        while 1:
+        while True:
             query = self.query + ' LIMIT ' + str(self.pack_size) + ' OFFSET ' + str(offset*self.pack_size) + ';'
             results = self.engine.execute(query, use_labels=True).fetchall()
             if not len(results):
@@ -33,5 +33,3 @@ class DatabaseExtract(Extract):
 
             offset += 1
 
-            if offset*self.pack_size >= 200000:
-                break
