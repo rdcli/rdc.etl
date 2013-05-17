@@ -91,27 +91,27 @@ class ThreadedTransform(Thread):
 
 class ThreadedHarness(object):
     def __init__(self):
-        self.transforms = []
+        self._transforms = []
 
     def start(self):
-        for transform in self.transforms:
+        for transform in self._transforms:
             transform.start()
 
     def join(self):
         while True:
             is_alive = False
-            for transform in self.transforms:
+            for transform in self._transforms:
                 is_alive = is_alive or transform.is_alive()
             self.update_status()
             if not is_alive:
                 break
             time.sleep(0.2)
-        for transform in self.transforms:
+        for transform in self._transforms:
             transform.join()
 
     def add(self, transform):
         t = ThreadedTransform(transform)
-        self.transforms.append(t)
+        self._transforms.append(t)
         return t
 
     def update_status(self):
