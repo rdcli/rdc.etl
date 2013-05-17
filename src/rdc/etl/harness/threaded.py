@@ -3,141 +3,120 @@
 # Author: Romain Dorgueil <romain@dorgueil.net>
 # Copyright: © 2011-2013 SARL Romain Dorgueil Conseil
 #
-from threading import Thread, RLock, Semaphore
-import types
-import time
-from rdc.etl.harness.base import Harness
+import time, types
+from Queue import Queue as BaseQueue
+from threading import Thread
 from rdc.etl.hash import Hash
-from rdc.etl.stream import Stream
-from rdc.etl.transform.extract import Extract
-import sys
+from . import Harness
 
 EOQ = object()
+QUEUE_MAX_SIZE = 8192
 
-class TransformThread(Thread):
-    def __init__(self, worker_pool, transform):
-        super(TransformThread, self).__init__()
+class Queue(BaseQueue):
+    def __init__(self, maxsize=QUEUE_MAX_SIZE):
+        BaseQueue.__init__(self, maxsize)
 
-        self.worker_pool = worker_pool
+class SingleItemQueue(Queue):
+    def __init__(self, maxsize=QUEUE_MAX_SIZE):
+        Queue.__init__(self, maxsize)
+        self.put(Hash())
+        self.put(EOQ)
+
+class MultiTailQueue(Queue):
+    def __init__(self, maxsize=QUEUE_MAX_SIZE, tails=None):
+        Queue.__init__(self, maxsize)
+
+        self._tails = tails or []
+
+    def put(self, item, block=True, timeout=None):
+        for tail in self._tails:
+            tail.put(hasattr(item, 'copy') and item.copy() or item, block, timeout)
+
+    def get(self, block=True, timeout=None):
+        raise RuntimeError('You cannot get() on a multi tail queue.')
+
+    def create_tail(self):
+        tail = Queue()
+        self._tails.append(tail)
+        return tail
+
+class ThreadedTransform(Thread):
+    def __init__(self, transform):
+        Thread.__init__(self)
+
         self.transform = transform
 
-        self.output_stream = Stream()
+        self.input = None
+        self.output = None
 
-    def plug_from(self, brick):
-        self.input_stream = brick.output_stream.create_pipe()
+    def set_input_from(self, io_transform):
+        if io_transform.output is None:
+            self.input = Queue()
+            io_transform.output = self.input
+        elif isinstance(io_transform.output, Queue):
+            q = io_transform.output
+            io_transform.output = MultiTailQueue(tails=[q])
+            self.input = io_transform.output.create_tail()
+        elif isinstance(io_transform.output, MultiTailQueue):
+            self.input = io_transform.output.create_tail()
+        else:
+            raise TypeError('I dont know what kind of output this is, man ...')
 
     def run(self):
-        transform = self.transform
-        output_stream = self.output_stream
+        input = self.input or SingleItemQueue()
 
-        semaphore = Semaphore(0)
-        wu_count = 0
+        while True:
+            _in = input.get()
 
-        while self.input_stream.alive:
-            if not len(self.input_stream):
-                time.sleep(1)
-                continue
+            if _in == EOQ:
+                if self.output is not None:
+                    self.output.put(EOQ)
+                break
 
-            input = []
-            for i in range(0, 4):
-                if not len(self.input_stream): break
-                el = self.input_stream.read()
-                if not el == Stream.EOS:
-                    input.append(el)
-            if not len(input):
-                continue
+            _out = self.transform(_in)
 
-            def _work_unit(input=input, semaphore=semaphore):
-                for _in in input:
-                    _out = transform(_in)
-                    if isinstance(_out, types.GeneratorType):
-                        for _ in _out:
-                            output_stream.write(_)
-                    elif _out is not None:
-                        output_stream.write(_out)
-                semaphore.release()
+            if isinstance(_out, types.GeneratorType):
+                for item in _out:
+                    if self.output is not None:
+                        self.output.put(item)
+            elif _out is not None:
+                if self.output is not None:
+                    self.output.put(_out)
 
-            self.worker_pool.add_work_unit(_work_unit)
-            wu_count += 1
-
-        for i in range(0, wu_count):
-            semaphore.acquire()
-
-        # problem : this is sent before the work units are executed.
-        output_stream.end()
+            # del _out ?
 
     def __repr__(self):
         return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
 
-class WorkerThread(Thread):
-    def __init__(self):
-        super(WorkerThread, self).__init__()
 
-        self.work_queue = []
-        self.terminate = False
+class ThreadedHarness(Harness):
+    def __init__(self):
+        self._transforms = []
 
     def run(self):
-        while True:
-            if len(self.work_queue):
-                _callable, _args, _kwargs = self.work_queue.pop()
-                _callable(*_args, **_kwargs)
-            else:
-                if self.terminate:
-                    return
-                time.sleep(1)
-
-class ThreadedHarness(object):
-    def __init__(self, worker_count=4):
-        self.worker_count = worker_count
-        self.workers = []
-        self.transforms = []
-
-    def start(self):
-        for i in range(0, self.worker_count):
-            worker = WorkerThread()
-            self.workers.append(worker)
-            worker.start()
-        for transform in self.transforms:
+        for transform in self._transforms:
             transform.start()
 
-    def join(self):
-        time.sleep(0.1)
+        # Alive loop
         while True:
             is_alive = False
-            for transform in self.transforms:
-                is_this_alive = transform.is_alive()
-                print "\033[K", transform
-                is_alive = is_alive or is_this_alive
+            for transform in self._transforms:
+                is_alive = is_alive or transform.is_alive()
+            self.update_status()
             if not is_alive:
                 break
-            sys.stdout.write("\033[F"*(len(self.transforms)))
-            time.sleep(0.25)
-        for transform in self.transforms:
+            time.sleep(0.2)
+
+        # Wait for all transform threads to finish
+        for transform in self._transforms:
             transform.join()
-        self.terminate()
-        print 'All done.'
-
-    def add_work_units(self, work):
-        while len(work):
-            max_work_per_worker = max(1, min(len(work) / len(self.workers), 16))
-            for worker in self.workers:
-                _cnt = max(0, max_work_per_worker - len(worker.work_queue))
-                if _cnt:
-                    worker.work_queue += work[0:_cnt]
-                    work = work[_cnt:]
-                    if not len(work): break
-            if not len(work): break
-
-    def add_work_unit(self, callable, *args, **kwargs):
-        self.add_work_units([(callable, args, kwargs, )])
 
     def add(self, transform):
-        t = TransformThread(self, transform)
-        self.transforms.append(t)
+        t = ThreadedTransform(transform)
+        self._transforms.append(t)
         return t
 
-    def terminate(self):
-        for worker in self.workers:
-            worker.terminate = True
-        for worker in self.workers:
-            worker.join()
+    def update_status(self):
+        pass
+
+

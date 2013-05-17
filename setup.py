@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.0'
+version = '0.1'
 
 setup(name='rdc.etl',
       version=version,
@@ -19,7 +19,6 @@ setup(name='rdc.etl',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          'processing',
       ],
       entry_points="""
       # -*- Entry points: -*-
