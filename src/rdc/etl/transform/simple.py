@@ -83,11 +83,11 @@ class _SimpleItemTransformationDescriptor(object):
         if isinstance(self.getter, str):
             _name = self.getter
             getter = lambda o: o.get(_name)
-            getter.func_name = 'get_' + _name
+            getter.func_name = 'get_' + str(_name)
         elif isinstance(self.getter, unicode):
-            _name = self.getter
-            getter = lambda o: o.get(_name.encode('utf-8'))
-            getter.func_name = 'get_' + _name
+            _name = self.getter.encode('utf-8')
+            getter = lambda o: o.get(_name)
+            getter.func_name = 'get_' + str(_name)
         else:
             getter = self.getter
             _name = repr(self.getter)
