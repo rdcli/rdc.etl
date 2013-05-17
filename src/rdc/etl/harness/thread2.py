@@ -82,20 +82,15 @@ class ThreadedHarness(object):
             transform.start()
 
     def join(self):
-        time.sleep(0.1)
         while True:
             is_alive = False
             for transform in self.transforms:
-                is_this_alive = transform.is_alive()
-                print "\033[K", transform
-                is_alive = is_alive or is_this_alive
+                is_alive = is_alive or transform.is_alive()
             if not is_alive:
                 break
-            sys.stdout.write("\033[F"*(len(self.transforms)))
-            time.sleep(0.5)
+            time.sleep(0.25)
         for transform in self.transforms:
             transform.join()
-        print 'All done.'
 
     def add(self, transform):
         t = ThreadedTransform(transform)
