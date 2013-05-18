@@ -70,6 +70,8 @@ def slughifi(value, do_slugify=True, overwrite_char_map=None):
 
 
 def filter_html(value):
+    if value is None:
+        return None
     soup = BeautifulSoup(value)
     for tag in soup.findAll(True):
         if tag.name not in VALID_HTML_TAGS:
