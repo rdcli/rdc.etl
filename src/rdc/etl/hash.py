@@ -48,7 +48,7 @@ class Hash(object):
         return False
 
     def __repr__(self):
-        return pformat(self.__dict__)
+        return '<' + self.__class__.__name__ + ' ' + pformat(self.__dict__) + '>'
 
     def restrict(self, tester, renamer=None):
         for k, v in self.__dict__.items():
