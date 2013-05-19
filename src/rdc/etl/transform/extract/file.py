@@ -9,6 +9,8 @@ from rdc.etl.util import create_http_reader, create_file_reader
 
 
 class FileExtract(Transform):
+    """ Deprecated in favor of FileJoin """
+
     uri = None
     output_field = None
 
