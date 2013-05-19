@@ -5,4 +5,6 @@
 #
 
 class IStatus(object):
-    pass
+    @abstract
+    def update(self, harness):
+        pass

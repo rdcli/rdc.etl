@@ -5,10 +5,12 @@
 #
 import types
 
+from rdc.etl.harness import AbstractHarness
 from rdc.etl.util import Timer
-from .base import Harness
 
-class LinearHarness(Harness):
+raise RuntimeError('Need update ...')
+
+class LinearHarness(AbstractHarness):
     def process(self, stream, current):
         id_current = id(current)
         eos = []

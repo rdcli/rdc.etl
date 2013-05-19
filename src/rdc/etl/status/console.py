@@ -20,3 +20,11 @@ class ConsoleStatus(IStatus):
     def __init__(self):
         self.ansi = has_ansi_support()
 
+    def update(self, transforms):
+        if self.ansi:
+            for transform in transforms:
+                print "\033[K   ", transform
+            sys.stdout.write("\033[F"*(len(transforms)))
+
+
+

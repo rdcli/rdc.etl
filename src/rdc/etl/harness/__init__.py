@@ -4,32 +4,43 @@
 # Copyright: © 2011-2013 SARL Romain Dorgueil Conseil
 #
 
-class Harness(object):
-    BEGIN = object()
+class IHarness(object):
+    """
+    ETL harness interface.
 
+    The harness is basically the executable stuff that will actually run a job.
+
+    """
+
+    @abstract
+    def __call__(self):
+        pass
+
+    def initialize(self):
+        pass
+
+    def finalize(self):
+        pass
+
+class AbstractHarness(IHarness):
+    """
+    Abstract harness defines initialize/finalize/loop, which are pretty handy. If you implement a custom harness, there
+    is 99.9% chances you want to extend this or a subclass of this.
+
+    """
     def __init__(self):
-        self.connections = {}
-        self._last_step = self.BEGIN
-
-    def add(self, *steps):
-        for step in steps:
-            self.connect(self._last_step, step)
-            self._last_step = step
-
-    def connect(self, tr_from, tr_to):
-        id_tr_from = id(tr_from)
-
-        if not id_tr_from in self.connections:
-            self.connections[id_tr_from] = set()
-
-        self.connections[id_tr_from].add(tr_to)
-
-    def initialize(self): pass
-    def finalize(self): pass
+        self.status = []
 
     def __call__(self):
         self.initialize()
-        _value = self.run()
+        _value = self.loop()
         self.finalize()
         return _value
 
+    @abstract
+    def loop(self):
+        pass
+
+    @abstract
+    def update_status(self):
+        pass

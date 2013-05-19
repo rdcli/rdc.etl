@@ -7,7 +7,7 @@ import time, types
 from Queue import Queue as BaseQueue
 from threading import Thread
 from rdc.etl.hash import Hash
-from . import Harness
+from rdc.etl.harness import AbstractHarness
 
 EOQ = object()
 QUEUE_MAX_SIZE = 8192
@@ -51,16 +51,21 @@ class ThreadedTransform(Thread):
 
     def set_input_from(self, io_transform):
         if io_transform.output is None:
+            # No output yet ? Let's create a basic queue.
             self.input = Queue()
             io_transform.output = self.input
         elif isinstance(io_transform.output, Queue):
+            # Already a simple queue there ? Let's make it multi-tailed.
             q = io_transform.output
             io_transform.output = MultiTailQueue(tails=[q])
             self.input = io_transform.output.create_tail()
         elif isinstance(io_transform.output, MultiTailQueue):
+            # Lot of outputs already, just need a new tail.
             self.input = io_transform.output.create_tail()
         else:
             raise TypeError('I dont know what kind of output this is, man ...')
+
+        return io_transform
 
     def run(self):
         input = self.input or SingleItemQueue()
@@ -89,11 +94,8 @@ class ThreadedTransform(Thread):
         return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
 
 
-class ThreadedHarness(Harness):
-    def __init__(self):
-        self._transforms = []
-
-    def run(self):
+class ThreadedHarness(AbstractHarness):
+    def loop(self):
         for transform in self._transforms:
             transform.start()
 
@@ -111,12 +113,18 @@ class ThreadedHarness(Harness):
         for transform in self._transforms:
             transform.join()
 
+    def update_status(self):
+        for status in self.status:
+            status.update(self._transforms)
+
+    # Methods below does not belong to API.
+    def __init__(self):
+        super(ThreadedHarness, self).__init__()
+        self._transforms = []
+
     def add(self, transform):
         t = ThreadedTransform(transform)
         self._transforms.append(t)
         return t
-
-    def update_status(self):
-        pass
 
 
