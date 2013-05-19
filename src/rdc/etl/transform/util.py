@@ -8,13 +8,30 @@ from rdc.etl.transform import Transform
 
 class Log(Transform):
     field_filter = None
+    prefix  = 'log> '
+    prefix2 = '   > '
 
     def __init__(self, field_filter=None):
         super(Log, self).__init__()
         self.field_filter = field_filter or self.field_filter
 
+    def format(self, s):
+        s = s.split('\n')
+        if not len(s[0].strip()):
+            return ''
+
+        s[0] = self.prefix + s[0]
+
+        if len(s) > 1:
+            s[1:] = [self.prefix2 + line for line in s[1:]]
+
+        return '\n'.join(s)
+
+    def output(self, s):
+        print self.format(s)
+
     def transform(self, hash):
-        print '<log>', hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter)
+        self.output(repr(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter)))
         yield hash
 
 class Stop(Transform):
