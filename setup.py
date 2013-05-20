@@ -1,20 +1,35 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+with open('VERSION') as f:
+    version = f.read()
 
 setup(name='rdc.etl',
       version=version,
-      description="",
-      long_description="""\
-""",
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      description="ETL in pure python",
+      long_description="""Extract Transform Load, using python""",
+      classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Developers',
+        'License :: Other/Proprietary License',
+        'Operating System :: OS Independent',
+        'Natural Language :: English',
+        'Programming Language :: Python',
+        'Topic :: Database',
+        'Topic :: Utilities',
+        'Topic :: Text Processing :: Filters',
+        'Topic :: Text Processing :: Indexing',
+
+      ], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='',
-      author='Romain Dorgueil',
+      author='SARL Romain Dorgueil Conseil',
       author_email='romain@dorgueil.net',
       url='https://rdc.li/etl/',
-      license='GPL',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      license='Proprietary.',
+      packages=find_packages('src', exclude=['ez_setup', 'examples', 'tests']),
       package_dir = {'': 'src'},
       include_package_data=True,
       zip_safe=False,

@@ -1,3 +1,10 @@
+# Python
 *.pyc
-*.egg-info
+
+# PyCharm files
 /.idea
+
+# setup.py related stuff
+/build
+/dist
+*.egg-info
