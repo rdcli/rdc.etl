@@ -46,7 +46,15 @@ class XmlMap(Transform):
         return d
 
     def transform(self, hash):
-        root = xml.etree.ElementTree.fromstring(hash.get(self.field))
+        xml_source = hash.get(self.field)
+
+        if xml_source is None:
+            raise KeyError(
+                self.__class__.__name__ + ' transform() method was expecting to find a "' + self.field + '" ' +
+                ' field, containing the XML source, but this field is not preseent in source hash (' + repr(hash) + ').'
+            )
+
+        root = xml.etree.ElementTree.fromstring(xml_source)
 
         if self.xpath:
             # TODO implement
