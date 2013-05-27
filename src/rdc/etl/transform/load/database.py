@@ -120,7 +120,7 @@ class DatabaseLoad(BaseDatabaseLoad):
     def transform(self, hash):
         self.buffer.append(hash)
 
-        if len(self.buffer) >= 100:
+        if len(self.buffer) >= 1000:
             for _out in self.commit():
                 yield _out
 
