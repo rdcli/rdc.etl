@@ -9,6 +9,7 @@ from rdc.etl.harness import AbstractHarness
 from rdc.etl.util import Timer
 
 raise RuntimeError('Need update ...')
+# initialize/finalize needed too.
 
 class LinearHarness(AbstractHarness):
     def process(self, stream, current):

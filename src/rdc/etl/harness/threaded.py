@@ -68,33 +68,39 @@ class ThreadedTransform(Thread):
 
         return io_transform
 
+    def _add_output(self, value):
+        if value:
+            if isinstance(value, types.GeneratorType):
+                for item in value:
+                    if self.output is not None:
+                        self.output.put(item)
+            else:
+                if self.output is not None:
+                    self.output.put(value)
+
     def run(self):
         input = self.input or SingleItemQueue()
+
+        self._add_output(self.transform.initialize())
 
         while True:
             _in = input.get()
 
             if _in == EOQ:
+                self._add_output(self.transform.finalize())
                 if self.output is not None:
                     self.output.put(EOQ)
                 break
 
             try:
                 _out = self.transform(_in)
+                self._add_output(_out)
             except Exception, e:
                 print 'Exception caught in transform():', e.__class__.__name__, e.args[0]
                 traceback.print_exc()
                 break
 
-            if isinstance(_out, types.GeneratorType):
-                for item in _out:
-                    if self.output is not None:
-                        self.output.put(item)
-            elif _out is not None:
-                if self.output is not None:
-                    self.output.put(_out)
 
-            # del _out ?
 
     def __repr__(self):
         return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)

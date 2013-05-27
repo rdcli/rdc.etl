@@ -8,7 +8,7 @@ from werkzeug.utils import cached_property
 from rdc.etl.transform import Transform
 from rdc.etl.util import now
 
-class DatabaseLoad(Transform):
+class BaseDatabaseLoad(Transform):
     table_name = None
     fetch_columns = None
     discriminant = ('id', )
@@ -16,8 +16,10 @@ class DatabaseLoad(Transform):
     updated_at_field = 'updated_at'
 
     def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None):
-        super(DatabaseLoad, self).__init__()
+        super(BaseDatabaseLoad, self).__init__()
         self.engine = engine
+        self.connection = engine.connect()
+        self._query_count = 0
         self.table_name = table_name or self.table_name
 
         self.fetch_columns = {}
@@ -41,9 +43,9 @@ class DatabaseLoad(Transform):
     def table(self):
         return Table(self.table_name, self.metadata, autoload=True, autoload_with=self.engine)
 
-    def find(self, dataset):
+    def find(self, dataset, connection=None):
         query = 'SELECT * FROM ' + self.table_name + ' WHERE ' + (' AND '.join([key_atom + ' = %s' for key_atom in self.discriminant])) + ' LIMIT 1;'
-        rp = self.engine.execute(query, [dataset.get(key_atom) for key_atom in self.discriminant])
+        rp = (connection or self.connection).execute(query, [dataset.get(key_atom) for key_atom in self.discriminant])
 
         return rp.fetchone()
 
@@ -56,7 +58,7 @@ class DatabaseLoad(Transform):
     def now(self):
         return now()
 
-    def transform(self, hash):
+    def do_transform(self, hash):
         row = self.find(hash)
 
         now = self.now
@@ -81,7 +83,7 @@ class DatabaseLoad(Transform):
             query = 'INSERT INTO ' + self.table_name + ' (' + ', '.join(dataset_keys) + ') VALUES (' + ', '.join(['%s' for col in dataset_keys]) + ')'
             values = [hash.get(key) for key in dataset_keys]
 
-        self.engine.execute(query, values)
+        self.connection.execute(query, values)
 
         if self.fetch_columns and len(self.fetch_columns):
             if not row:
@@ -92,4 +94,35 @@ class DatabaseLoad(Transform):
             for alias, column in self.fetch_columns.items():
                 hash.set(alias, row[column])
 
-        yield hash
+        return hash
+
+    def transform(self, hash):
+        with self.connection.begin():
+            yield self.do_transform(hash)
+
+class DatabaseLoad(BaseDatabaseLoad):
+    def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None,
+                 updated_at_field=None):
+        super(DatabaseLoad, self).__init__(engine, table_name, fetch_columns, discriminant, created_at_field,
+                                            updated_at_field)
+
+        self.buffer = []
+
+    def commit(self):
+        with self.connection.begin():
+            while len(self.buffer):
+                hash = self.buffer.pop(0)
+                yield self.do_transform(hash)
+
+    def transform(self, hash):
+        self.buffer.append(hash)
+
+        if len(self.buffer) >= 100:
+            for _out in self.commit():
+                yield _out
+
+    def finalize(self):
+        for _out in self.commit():
+            self._s_out += 1
+            yield _out
+

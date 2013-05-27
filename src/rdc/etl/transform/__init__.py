@@ -27,5 +27,11 @@ class Transform(object):
             self._s_out += 1
             yield t
 
+    def initialize(self):
+        pass
+
+    def finalize(self):
+        pass
+
     def __repr__(self):
         return '<'+self.__class__.__name__+' in='+str(self._s_in)+' out='+str(self._s_out)+'>'
