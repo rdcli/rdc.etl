@@ -18,7 +18,6 @@ class BaseDatabaseLoad(Transform):
     def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None):
         super(BaseDatabaseLoad, self).__init__()
         self.engine = engine
-        self.connection = engine.connect()
         self._query_count = 0
         self.table_name = table_name or self.table_name
 
@@ -57,6 +56,10 @@ class BaseDatabaseLoad(Transform):
     @property
     def now(self):
         return now()
+
+    @cached_property
+    def connection(self):
+        return self.engine.connect()
 
     def do_transform(self, hash):
         row = self.find(hash)

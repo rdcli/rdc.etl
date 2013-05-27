@@ -27,6 +27,3 @@ class ConsoleStatus(IStatus):
             for transform in transforms:
                 print "\033[K   ", transform
                 self._lc = len(transforms)
-
-
-
