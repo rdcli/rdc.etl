@@ -57,10 +57,6 @@ class BaseDatabaseLoad(Transform):
     def now(self):
         return now()
 
-    @cached_property
-    def connection(self):
-        return self.engine.connect()
-
     def do_transform(self, hash):
         row = self.find(hash)
 
@@ -110,6 +106,17 @@ class DatabaseLoad(BaseDatabaseLoad):
                                             updated_at_field)
 
         self.buffer = []
+        self._connection = None
+
+    @property
+    def connection(self):
+        if self._connection is None:
+            self._connection = self.engine.connect()
+        return self._connection
+
+    def close_connection(self):
+        self._connection.close()
+        self._connection = None
 
     def commit(self):
         with self.connection.begin():
@@ -128,4 +135,6 @@ class DatabaseLoad(BaseDatabaseLoad):
         for _out in self.commit():
             self._s_out += 1
             yield _out
+
+        self.close_connection()
 
