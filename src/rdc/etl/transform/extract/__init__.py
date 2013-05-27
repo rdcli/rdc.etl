@@ -43,6 +43,7 @@ class Extract(Transform):
     def transform(self, h):
         stream_data = self.stream_data() if callable(self.stream_data) else self.stream_data
 
-        for data in stream_data:
-            out = h.copy(data)
-            yield out
+        if stream_data:
+            for data in stream_data:
+                out = h.copy(data)
+                yield out

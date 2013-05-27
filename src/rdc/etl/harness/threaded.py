@@ -6,6 +6,7 @@
 import time, types
 from Queue import Queue as BaseQueue
 from threading import Thread
+import traceback
 from rdc.etl.hash import Hash
 from rdc.etl.harness import AbstractHarness
 
@@ -78,7 +79,12 @@ class ThreadedTransform(Thread):
                     self.output.put(EOQ)
                 break
 
-            _out = self.transform(_in)
+            try:
+                _out = self.transform(_in)
+            except Exception, e:
+                print 'Exception caught in transform():', e.__class__.__name__, e.args[0]
+                traceback.print_exc()
+                break
 
             if isinstance(_out, types.GeneratorType):
                 for item in _out:
