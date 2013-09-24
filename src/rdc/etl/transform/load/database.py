@@ -11,11 +11,12 @@ from rdc.etl.util import now
 class BaseDatabaseLoad(Transform):
     table_name = None
     fetch_columns = None
+    insert_only_fields = None
     discriminant = ('id', )
     created_at_field = 'created_at'
     updated_at_field = 'updated_at'
 
-    def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None):
+    def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None, insert_only_fields=None):
         super(BaseDatabaseLoad, self).__init__()
         self.engine = engine
         self._query_count = 0
@@ -29,10 +30,12 @@ class BaseDatabaseLoad(Transform):
         self.created_at_field = created_at_field or 'created_at'
         self.updated_at_field = updated_at_field or 'updated_at'
 
-    def get_existing_keys(self, dataset):
+        self.insert_only_fields = insert_only_fields or ()
+
+    def get_existing_keys(self, dataset, insert=False):
         keys = dataset.keys()
         column_names = self.table.columns.keys()
-        return [key for key in keys if key in column_names]
+        return [key for key in keys if key in column_names and (insert or key not in self.insert_only_fields)]
 
     @cached_property
     def metadata(self):
@@ -69,7 +72,7 @@ class BaseDatabaseLoad(Transform):
                 hash.remove(self.updated_at_field)
 
         if row:
-            dataset_keys = self.get_existing_keys(hash)
+            dataset_keys = self.get_existing_keys(hash, insert=False)
             query = 'UPDATE ' + self.table_name + ' SET ' + ', '.join(['%s = %%s' % (col, ) for col in dataset_keys if not col in self.discriminant]) + ' WHERE ' + (' AND '.join([key_atom + ' = %s' for key_atom in self.discriminant]))
             values = [hash.get(col) for col in dataset_keys if not col in self.discriminant] + [hash.get(col) for col in self.discriminant]
         else:
@@ -78,7 +81,7 @@ class BaseDatabaseLoad(Transform):
             else:
                 if hash.has(self.created_at_field):
                     hash.remove(self.created_at_field)
-            dataset_keys = self.get_existing_keys(hash)
+            dataset_keys = self.get_existing_keys(hash, insert=True)
             query = 'INSERT INTO ' + self.table_name + ' (' + ', '.join(dataset_keys) + ') VALUES (' + ', '.join(['%s' for col in dataset_keys]) + ')'
             values = [hash.get(key) for key in dataset_keys]
 
@@ -101,9 +104,9 @@ class BaseDatabaseLoad(Transform):
 
 class DatabaseLoad(BaseDatabaseLoad):
     def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None,
-                 updated_at_field=None):
+                 updated_at_field=None, insert_only_fields=None):
         super(DatabaseLoad, self).__init__(engine, table_name, fetch_columns, discriminant, created_at_field,
-                                            updated_at_field)
+                                            updated_at_field, insert_only_fields)
 
         self.buffer = []
         self._connection = None

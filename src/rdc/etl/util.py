@@ -28,6 +28,16 @@ def replace_char(m):
     else:
         return char
 
+def unaccent(value):
+    # unicodification
+    if type(value) != types.UnicodeType:
+        value = unicode(value, 'utf-8', 'ignore')
+
+    # try to replace chars
+    value = re.sub('[^a-zA-Z0-9\\s\\-]{1}', replace_char, value)
+
+    return value.encode('ascii', 'ignore')
+
 def slughifi(value, do_slugify=True, overwrite_char_map=None):
     '''
     High Fidelity slugify - slughifi.py, v 0.1

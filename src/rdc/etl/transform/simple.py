@@ -53,8 +53,30 @@ class _SimpleItemTransformationDescriptor(object):
         return self
 
     def if_none(self, field=None):
+        """
+        TODO document this and add a generic if_
+        """
         self.conditions.insert(0, lambda hash, name: hash.get(field or name, None) is None)
         return self
+
+    def prepend(self, *fields, **options):
+        cond = options.get('cond', None)
+        postfix = options.get('postfix', None)
+        separator = options.get('separator', '')
+
+        # default conditions
+        if cond is None:
+            cond = lambda v: v and len(v)
+        elif not callable(cond):
+            cond = lambda v: cond
+
+        def _filter(v, h, fields=fields, cond=cond, postfix=postfix, separator=separator):
+            out = separator.join([h.get(field) for field in fields if cond(h.get(field))])
+            if len(out) and postfix:
+                out = out + postfix
+            return out + (v or '')
+
+        return self.filter_multi(_filter)
 
     def append(self, *fields, **options):
         cond = options.get('cond', None)
@@ -98,7 +120,8 @@ class _SimpleItemTransformationDescriptor(object):
             try:
                 value = _apply_filter(value, hash, filter)
             except Exception, e:
-                print hash, _name, value, filter
+                print "An exception was caught while filtering an item: "+repr(e.__class__)
+                print 'hash: ', hash, 'name: ', _name, 'value: ', repr(value), 'filter: ', filter
                 raise
 
         return value
