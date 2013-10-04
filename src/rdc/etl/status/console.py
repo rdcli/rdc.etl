@@ -23,7 +23,8 @@ class ConsoleStatus(IStatus):
 
     def update(self, transforms):
         if self.ansi:
-            sys.stdout.write("\033[F"*self._lc)
+            sys.stdout.write("\033[F"*(self._lc+1))
+            print "\033[K", "-"*80
             for transform in transforms:
                 print "\033[K   ", transform
                 self._lc = len(transforms)

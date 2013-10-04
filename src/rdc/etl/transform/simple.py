@@ -120,9 +120,9 @@ class _SimpleItemTransformationDescriptor(object):
             try:
                 value = _apply_filter(value, hash, filter)
             except Exception, e:
-                print "An exception was caught while filtering an item: "+repr(e.__class__)
+                print "EXCEPTION CAUGHT: "+repr(e.__class__)
                 print 'hash: ', hash, 'name: ', _name, 'value: ', repr(value), 'filter: ', filter
-                raise
+                return None
 
         return value
 
