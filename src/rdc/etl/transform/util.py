@@ -54,3 +54,13 @@ class Halt(Transform):
         print hash
         print '=== HALT ! ==='
         sys.exit(1)
+
+class Override(Transform):
+    override_data = {}
+
+    def __init__(self, override_data = None):
+        super(Override, self).__init__()
+        self.override_data = override_data or self.override_data
+
+    def transform(self, hash):
+        yield hash.update(self.override_data)

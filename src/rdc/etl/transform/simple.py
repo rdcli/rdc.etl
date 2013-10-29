@@ -167,6 +167,9 @@ class SimpleTransform(Transform):
         setattr(self, name, descr)
         return descr
 
+    def delete(self, name):
+        delattr(self, name)
+
     def remove(self, name):
         self.filter(lambda t: t.remove(name))
 

@@ -35,7 +35,7 @@ class BaseDatabaseLoad(Transform):
     def get_existing_keys(self, dataset, insert=False):
         keys = dataset.keys()
         column_names = self.table.columns.keys()
-        return [key for key in keys if key in column_names and (insert or key not in self.insert_only_fields)]
+        return [key for key in keys if key in column_names and (insert or (key not in self.insert_only_fields))]
 
     @cached_property
     def metadata(self):

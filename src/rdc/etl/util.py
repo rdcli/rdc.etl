@@ -113,7 +113,7 @@ def create_http_reader(url):
 
 def create_file_reader(path):
     def file_reader():
-        with open(path) as f:
+        with open(path, 'rU') as f:
             return f.read()
     return file_reader
 
