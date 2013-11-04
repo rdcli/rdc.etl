@@ -39,6 +39,7 @@ class Hash(object):
 
     def set(self, key, value):
         setattr(self, key, value)
+        return self
 
     def has(self, key, allow_none=False):
         if hasattr(self, key):

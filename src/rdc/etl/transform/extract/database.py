@@ -10,10 +10,11 @@ class DatabaseExtract(Extract):
     query = 'SELECT 1'
     pack_size = 1000
 
-    def __init__(self, engine):
+    def __init__(self, engine, query=None):
         super(DatabaseExtract, self).__init__()
 
         self.engine = engine
+        self.query = query or self.query
 
     def transform(self, hash):
         self.query = self.query.strip()

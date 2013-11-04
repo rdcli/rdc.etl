@@ -24,6 +24,17 @@ class SingleItemQueue(Queue):
         self.put(EOQ)
 
 class MultiTailQueue(Queue):
+    """
+    A multi-tail queue is a regular one input channel queue that sends everything it gets in into its "tail" queues. If
+    possible, it will "copy" the input item, so we avoid concurrency transform problems. As every input data is getting
+    instantaneously flushed to the tails, get() method does not have any sense, and thus this should not be used as a
+    transform input, instead, use a tail for this.
+
+    The aim of this class is to be able to plug one output to multiple transformations' inputs, without having to worry
+    about concurrency. We may be a bit concerned about memory usage later (TODO), but for any reasonable use, it should
+    be ok.
+
+    """
     def __init__(self, maxsize=QUEUE_MAX_SIZE, tails=None):
         Queue.__init__(self, maxsize)
 
@@ -61,7 +72,7 @@ class ThreadedTransform(Thread):
             io_transform.output = MultiTailQueue(tails=[q])
             self.input = io_transform.output.create_tail()
         elif isinstance(io_transform.output, MultiTailQueue):
-            # Lot of outputs already, just need a new tail.
+            # More than one output already, just need a new tail.
             self.input = io_transform.output.create_tail()
         else:
             raise TypeError('I dont know what kind of output this is, man ...')
@@ -100,8 +111,6 @@ class ThreadedTransform(Thread):
                 traceback.print_exc()
                 break
 
-
-
     def __repr__(self):
         return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
 
@@ -134,9 +143,19 @@ class ThreadedHarness(AbstractHarness):
         super(ThreadedHarness, self).__init__()
         self._transforms = []
 
+        # pointer to last added transform, wo we can use the chain_add shortcut
+        self._last_transform = None
+
     def add(self, transform):
         t = ThreadedTransform(transform)
         self._transforms.append(t)
         return t
+
+    def chain_add(self, *transforms):
+        for transform in transforms:
+            io_transform = self.add(transform)
+            if self._last_transform:
+                io_transform.set_input_from(self._last_transform)
+            self._last_transform = io_transform
 
 

@@ -168,11 +168,21 @@ class SimpleTransform(Transform):
         return descr
 
     def delete(self, name):
+        """
+        Unset a descriptor.
+        """
         delattr(self, name)
 
     def remove(self, name):
+        """
+        Removes a field in hash, using a post transform filter.
+        """
         self.filter(lambda t: t.remove(name))
 
     def filter(self, filter):
+        """
+        Adds a post transform filter.
+        """
         self._filters.append(filter)
         return self
+
