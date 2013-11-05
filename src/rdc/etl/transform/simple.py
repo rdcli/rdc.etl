@@ -173,11 +173,12 @@ class SimpleTransform(Transform):
         """
         delattr(self, name)
 
-    def remove(self, name):
+    def remove(self, *names):
         """
         Removes a field in hash, using a post transform filter.
         """
-        self.filter(lambda t: t.remove(name))
+        for name in names:
+            self.filter(lambda t: t.remove(name))
 
     def filter(self, filter):
         """
