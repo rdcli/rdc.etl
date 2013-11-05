@@ -61,6 +61,7 @@ class Hash(object):
         return self
 
     def remove(self, key):
-        delattr(self, key)
+        if key in self.__dict__:
+            self.__dict__.pop(key)
         return self
 
