@@ -93,13 +93,15 @@ char_map = {u'À': 'A', u'Á': 'A', u'Â': 'A', u'Ã': 'A', u'Ä': 'Ae', u'Å': 
             u'ძ': 'dz', u'წ': 'ts', u'ჭ': 'ch', u'ხ': 'kh', u'ჯ': 'j', u'ჰ': 'h'}
 
 
-def slugify(s):
+def slugify(s, strip=False):
     """
     Simple slug filter, that has no knowledge of diacritics. Prefer slughifi (see below) to this method for good slugs,
     even if for simple languages like english this may be enough (and probably faster).
     """
-    str = unidecode.unidecode(s).lower()
-    return re.sub(r'\W+', '-', s).lower()
+    str = re.sub(r'\W+', '-', unidecode.unidecode(s).lower())
+    if strip:
+        str = re.sub('(^-+|-+$)', '', str)
+    return str
 
 
 def replace_char(m):
@@ -124,7 +126,7 @@ def unaccent(value):
     return value.encode('ascii', 'ignore')
 
 
-def slughifi(value, do_slugify=True, overwrite_char_map=None):
+def slughifi(value, do_slugify=True, overwrite_char_map=None, strip=False):
     """
     High Fidelity slugify - slughifi.py, v 0.1
 
@@ -160,9 +162,9 @@ def slughifi(value, do_slugify=True, overwrite_char_map=None):
     # try to replace chars
     value = re.sub('[^a-zA-Z0-9\\s\\-]{1}', replace_char, value)
 
-    # apply default slugify
+    # apply ascii slugify
     if do_slugify:
-        value = slugify(value)
+        value = slugify(value, strip=strip)
 
     return value.encode('ascii', 'ignore')
 
@@ -184,6 +186,7 @@ class Timer(object):
     """
     Context manager used to time execution of stuff.
     """
+
     def __enter__(self):
         self.__start = time.time()
 
@@ -203,6 +206,7 @@ def create_http_reader(url):
     """
     Simple reader for an HTTP resource.
     """
+
     def http_reader():
         return requests.get(url).text.encode('utf-8')
 
@@ -213,6 +217,7 @@ def create_file_reader(path):
     """
     Simple reader for a local filesystem resource.
     """
+
     def file_reader():
         with open(path, 'rU') as f:
             return f.read()
