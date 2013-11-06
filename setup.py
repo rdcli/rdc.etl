@@ -7,8 +7,33 @@ from rdc.etl import __version__
 
 setup(name='rdc.etl',
       version=__version__,
-      description="Extract Transform Load toolkit for python",
-      long_description="""Data integration toolkit, using standard ETL patterns.
+      description="Extract Transform Load (ETL) toolkit for python",
+      long_description="""
+      Toolkit for doing data integration related work, using connected
+      transformations. Unlike java based tools like talend or pentaho
+      data-integration, this is a DIY framework, and if you're looking for a
+      WYSIWIG ETL engine, you should probably go back to the previously cited
+      ones.
+
+      Not so relevant example:
+
+          >>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
+          >>> harness = Harness()
+          >>> from rdc.etl.transform.extract import Extract
+          >>> extract = Extract(stream_data=({'foo': 'bar'}, {'foo': 'baz'}))
+          >>> from rdc.etl.transform.simple import SimpleTransform
+          >>> transform = SimpleTransform()
+          >>> transform.add('foo').filter('upper')
+          >>> from rdc.etl.transform.util import Log
+          >>> load = Log()
+          >>> harness.chain_add(extract, transform, load)
+          >>> harness()
+
+      This is a work in progress, although it it used for a few different
+      production systems, it may or may not fit your need, and you should
+      expect to have to dive into the code for now, as neither documentation or
+      tests are there to help.
+
       """,
       classifiers=[
         'Development Status :: 3 - Alpha',
