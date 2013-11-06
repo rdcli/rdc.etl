@@ -1,12 +1,9 @@
+import os, sys
 from setuptools import setup, find_packages
 
-try:
-    raise ImportError('')
-    from rdc.etl import __version__
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
-    from rdc.etl import __version__
+# Force our version to be used, don't know what is best practice here.
+sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+from rdc.etl import __version__
 
 setup(name='rdc.etl',
       version=__version__,
@@ -35,7 +32,7 @@ setup(name='rdc.etl',
       url='https://rdc.li/etl/',
       download_url='https://github.com/rdconseil/etl/tarball/' + __version__,
       license='Apache License, Version 2.0',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      packages=find_packages('src', exclude=['ez_setup', 'example', 'test']),
       package_dir = {'': 'src'},
       include_package_data=True,
       zip_safe=False,
