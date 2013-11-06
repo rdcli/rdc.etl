@@ -34,7 +34,12 @@ setup(name='rdc.etl',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
+        # todo most of the deps are optional and depends on what we wanna
+        # actually use, make it so nothing is required, but still travis
+        # install the needed ones and an exception is raised when one tries to
+        # use a component with a dependency without having it installed first.
         'BeautifulSoup',
+        'requests',
       ],
       entry_points="""
       # -*- Entry points: -*-
