@@ -1,10 +1,8 @@
 from setuptools import setup, find_packages
-
-with open('VERSION') as f:
-    version = f.read()
+from rdc.etl import __version__
 
 setup(name='rdc.etl',
-      version=version,
+      version=__version__,
       description="Extract Transform Load toolkit for python",
       long_description="""Data integration toolkit, using standard ETL patterns.
       """,
@@ -28,7 +26,7 @@ setup(name='rdc.etl',
       author='Romain Dorgueil',
       author_email='romain@dorgueil.net',
       url='https://rdc.li/etl/',
-      download_url='https://github.com/rdconseil/etl/tarball/' + version,
+      download_url='https://github.com/rdconseil/etl/tarball/' + __version__,
       license='Apache License, Version 2.0',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       package_dir = {'': 'src'},

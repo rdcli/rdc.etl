@@ -25,4 +25,5 @@ except ImportError:
 # rdc.etl requires pobject
 import rdc.etl.contrib.pobjects.pobjects_builtins
 
+__version__ = '1.0.0a1'
 
