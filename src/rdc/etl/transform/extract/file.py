@@ -24,7 +24,7 @@ class FileExtract(Transform):
     """
 
     uri = None
-    output_field = None
+    output_field = '_'
 
     def __init__(self, uri=None, output_field=None):
         super(FileExtract, self).__init__()

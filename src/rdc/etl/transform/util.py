@@ -118,3 +118,13 @@ class Override(Transform):
 
     def transform(self, hash):
         yield hash.update(self.override_data)
+
+
+class Clean(Transform):
+    """
+    Remove all fields with keys starting by _
+    """
+
+    def transform(self, hash):
+        yield hash.restrict(lambda k: not k.startswith('_'))
+

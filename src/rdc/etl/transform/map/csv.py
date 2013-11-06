@@ -26,7 +26,7 @@ except:
 
 
 class CsvMap(Transform):
-    field = None
+    field = '_'
     delimiter = ';'
     quotechar = '"'
     headers = None
