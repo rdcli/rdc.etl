@@ -131,6 +131,69 @@ class ThreadedTransform(Thread):
         return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
 
 
+class TransformThread(Thread):
+    """Decorator for transformations that encapsulates it in a thread."""
+
+    def __init__(self, transform, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(TransformThread, self).__init__(group, target, name, args, kwargs, verbose)
+        self.transform = transform
+
+    @property
+    def input(self):
+        return self.transform.input
+
+    @property
+    def output(self):
+        return self.transform.output
+
+    def _add_output(self, value):
+        if value:
+            if isinstance(value, types.GeneratorType):
+                for item in value:
+                    if self.output is not None:
+                        self.output.put(item)
+            else:
+                if self.output is not None:
+                    self.output.put(value)
+
+    def run(self):
+        input = self.input or SingleItemQueue()
+
+        self._add_output(self.transform.initialize())
+
+        while True:
+            _in = input.get()
+
+            if _in == EOQ:
+                self._add_output(self.transform.finalize())
+                if self.output is not None:
+                    self.output.put(EOQ)
+                break
+
+            try:
+                _out = self.transform(_in)
+                self._add_output(_out)
+            except Exception, e:
+                print 'Exception caught in transform():', e.__class__.__name__, e.args[0]
+                traceback.print_exc()
+                break
+
+    def __repr__(self):
+        return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
+
+
+class IdGenerator(object):
+    def __init__(self):
+        self.current = 0
+
+    def get(self):
+        return self.current
+
+    def next(self):
+        self.current += 1
+        return self.current
+
+
 class ThreadedHarness(AbstractHarness):
     def loop(self):
         for transform in self._transforms:
@@ -157,12 +220,17 @@ class ThreadedHarness(AbstractHarness):
     # Methods below does not belong to API.
     def __init__(self):
         super(ThreadedHarness, self).__init__()
-        self._transforms = []
+        self._transforms = {}
+        self._threads = {}
+        self._current_id = IdGenerator()
 
-        # pointer to last added transform, wo we can use the chain_add shortcut
+        # pointer to last added transform, so we can use the chain_add shortcut
         self._last_transform = None
 
     def add(self, transform):
+        id = self._current_id.next()
+        self._transforms[id] = transform
+
         t = ThreadedTransform(transform)
         self._transforms.append(t)
         return t

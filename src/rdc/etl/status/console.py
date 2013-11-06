@@ -38,6 +38,6 @@ class ConsoleStatus(IStatus):
         if self.ansi:
             sys.stdout.write("\033[F" * (self._lc + 1))
             print "\033[K", "-" * 80
-            for transform in transforms:
-                print "\033[K   ", transform
+            for id, transform in transforms.items():
+                print "\033[K   ", id, transform
                 self._lc = len(transforms)

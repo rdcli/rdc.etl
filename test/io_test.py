@@ -14,11 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# this is a namespace package
-try:
-    import pkg_resources
-    pkg_resources.declare_namespace(__name__)
-except ImportError:
-    import pkgutil
-    __path__ = pkgutil.extend_path(__path__, __name__)
+import unittest
+from rdc.etl.io import CommunicationChannelCollection
 
+
+class CommunicationChannelCollectionTestCase(unittest.TestCase):
+    def test(self):
+        c = CommunicationChannelCollection([0, 1, 2, ])
+        c.get_queue()
+
+
+if __name__ == '__main__':
+    unittest.main()
