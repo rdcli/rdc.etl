@@ -1,8 +1,19 @@
 # -*- coding: utf-8 -*-
 #
-# Author: Romain Dorgueil <romain@dorgueil.net>
-# Copyright: © 2011-2013 SARL Romain Dorgueil Conseil
+# Copyright 2012-2013 Romain Dorgueil
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from rdc.etl.transform import Transform
 from rdc.etl.util import filter_html
 
@@ -21,7 +32,7 @@ def _apply_filter(value, hash, filter):
 
 
 class _SimpleItemTransformationDescriptor(object):
-    def __init__(self, getter = None, *filters):
+    def __init__(self, getter=None, *filters):
         self.getter = getter
         self.filters = list(filters)
         self.conditions = []
@@ -42,6 +53,7 @@ class _SimpleItemTransformationDescriptor(object):
         :param k: key to save under
         :return:
         """
+
         def _filter(v, h, k=k, filter=filter):
             h.set(k, _apply_filter(v, h, filter) if filter is not None else v)
             return v
@@ -120,13 +132,40 @@ class _SimpleItemTransformationDescriptor(object):
             try:
                 value = _apply_filter(value, hash, filter)
             except Exception, e:
-                print "EXCEPTION CAUGHT: "+repr(e.__class__)
+                print "EXCEPTION CAUGHT: " + repr(e.__class__)
                 print 'hash: ', hash, 'name: ', _name, 'value: ', repr(value), 'filter: ', filter
                 return None
 
         return value
 
+
 class SimpleTransform(Transform):
+    """SimpleTransform is an attempt to make a trivial transformation easy to build, using fluid APIs and a lot of easy
+    shortcuts to apply filters to some fields.
+
+    The API is not stable and this will probably go to a contrib or extra package later.
+
+    Example:
+
+        >>> t = SimpleTransform()
+
+        # Apply "upper" method on "name" field, and store it back in "name" field.
+        >>> t.add('name').filter('upper')
+
+        # Apply the lambda to "description" field content, and store it into the "full_description" field.
+        >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
+
+        # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
+        # hashes, it is only usefull to override some parent stuff.
+        >>> t.delete('useless')
+
+        # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
+        >>> t.remove('notanymore')
+
+        # Add a field (output hashes will contain this field, all with the same "foo bar" value).
+        >>> t.test_field = 'foo bar'
+
+    """
     DescriptorClass = _SimpleItemTransformationDescriptor
 
     def __init__(self, *filters):

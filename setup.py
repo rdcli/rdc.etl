@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
-import sys, os
 
 with open('VERSION') as f:
     version = f.read()
 
 setup(name='rdc.etl',
       version=version,
-      description="ETL in pure python",
-      long_description="""Extract Transform Load, using python""",
+      description="Extract Transform Load toolkit for python",
+      long_description="""Data integration toolkit, using standard ETL patterns.
+      """,
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
@@ -23,12 +23,12 @@ setup(name='rdc.etl',
         'Topic :: Text Processing :: Filters',
         'Topic :: Text Processing :: Indexing',
 
-      ], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      ],
       keywords='',
-      author='SARL Romain Dorgueil Conseil',
+      author='Romain Dorgueil',
       author_email='romain@dorgueil.net',
       url='https://rdc.li/etl/',
-      license='Proprietary.',
+      license='Apache License, Version 2.0',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       package_dir = {'': 'src'},
       include_package_data=True,
