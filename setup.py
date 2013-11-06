@@ -41,6 +41,7 @@ setup(name='rdc.etl',
         # use a component with a dependency without having it installed first.
         'BeautifulSoup',
         'requests',
+        'unidecode',
       ],
       entry_points="""
       # -*- Entry points: -*-
