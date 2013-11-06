@@ -17,7 +17,6 @@
 from copy import copy
 from pprint import pformat
 
-
 class Hash(object):
     """
     Enhanced dictionary type used to communicate named tuples between transform blocks.
@@ -82,4 +81,8 @@ class Hash(object):
         if key in self.__dict__:
             self.__dict__.pop(key)
         return self
+
+    def get_values(self, keys):
+        return [self.get(key) for key in keys]
+
 
