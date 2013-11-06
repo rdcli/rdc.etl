@@ -1,5 +1,12 @@
 from setuptools import setup, find_packages
-from rdc.etl import __version__
+
+try:
+    raise ImportError('')
+    from rdc.etl import __version__
+except ImportError:
+    import os, sys
+    sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
+    from rdc.etl import __version__
 
 setup(name='rdc.etl',
       version=__version__,
