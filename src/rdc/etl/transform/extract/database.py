@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from rdc.etl.transform.extract import Extract
 
 
@@ -27,7 +28,7 @@ class DatabaseExtract(Extract):
         self.engine = engine
         self.query = query or self.query
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         self.query = self.query.strip()
         if self.query[-1] == ';':
             self.query = self.query[0:-1]

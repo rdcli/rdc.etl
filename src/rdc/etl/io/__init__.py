@@ -65,6 +65,7 @@ class Queue(BaseQueue):
         if v == EndOfStream:
             assert self._eos_received, 'Integrity problem: a queue should not be able to terminate without receiving the EndOfStream signal first.'
             self.terminated = True
+            raise TerminatedInputError('Queue just got termination signal.')
 
         return v
 
@@ -109,6 +110,7 @@ class MultiTailQueue(Queue):
 
 class CommunicationChannelCollection(object):
     DEFAULT_CHANNEL = None
+    auto_create = False
 
     def __init__(self, channels):
         self.queues = {channel: None for channel in channels}
@@ -120,8 +122,9 @@ class CommunicationChannelCollection(object):
         if not channel in self.queues:
             raise KeyError('Cannot get queue for non existant channel %r.' % (channel))
 
-        if self.queues[channel] is None:
-            self.queues[channel] = Queue()
+        if self.auto_create:
+            if self.queues[channel] is None:
+                self.queues[channel] = Queue()
 
         return self.queues[channel]
 
@@ -137,16 +140,36 @@ class CommunicationChannelCollection(object):
         else:
             raise NotImplementedError('multi input queues not implemented')
 
+    def get_queues(self):
+        return [self.get_queue(channel) for channel in self.queues]
+
     def put(self, data, channel=None):
         self.get_queue(channel or self.DEFAULT_CHANNEL).put(data)
 
     def get(self, channel=None):
         return self.get_queue(channel or self.DEFAULT_CHANNEL).get()
 
+    @property
+    def plugged(self):
+        if not len(self.queues):
+            # todo is this right ? can we consider that a no queue channel collection is "plugged" ?
+            return True
+
+        if self.auto_create:
+            return True
+
+        for id, queue in self.queues.items():
+            if queue is not None:
+                return True
+
+        return False
+
 
 class OutputChannelCollection(CommunicationChannelCollection):
     DEFAULT_CHANNEL = STDOUT
     ERROR_CHANNEL = STDERR
+
+    auto_create = True
 
     def __init__(self, channels=(STDOUT, STDERR, )):
         super(OutputChannelCollection, self).__init__(channels)
@@ -157,6 +180,10 @@ class OutputChannelCollection(CommunicationChannelCollection):
     def put_error(self, error):
         raise error
         raise NotImplementedError('todo, error management')
+
+    def put_all(self, data):
+        for channel in self.queues:
+            self.put(data, channel)
 
 
 class InputChannelCollection(CommunicationChannelCollection):
@@ -174,16 +201,16 @@ class InputChannelCollection(CommunicationChannelCollection):
     def get_any(self):
         # todo documentation says .enpty() value is not reliable ... XXX
         while not self.terminated:
-            for queue in self.queues:
+            for id, queue in self.queues.items():
                 if not queue.empty():
-                    return queue.get()
+                    return queue.get(), id
             time.sleep(0.5)
 
         raise TerminatedInputError('This input collection is terminated.')
 
     @property
     def terminated(self):
-        for queue in self.queues:
+        for id, queue in self.queues.items():
             if queue and not queue.terminated:
                 return False
             return True

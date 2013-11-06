@@ -16,7 +16,7 @@
 
 import types
 from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputChannelCollection, OutputChannelCollection, TerminatedInputError
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputChannelCollection, OutputChannelCollection, TerminatedInputError, EndOfStream
 
 
 class Transform(object):
@@ -63,6 +63,8 @@ class Transform(object):
             if finalize and not self.finalized:
                 self.finalized = True
                 self.__execute_and_handle_output(self.finalize)
+
+                self.output.put_all(EndOfStream)
 
     @abstract
     def transform(self, hash, channel=STDIN):

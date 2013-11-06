@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
@@ -46,13 +47,8 @@ class DatabaseCreateTable(Transform):
 
         return super(DatabaseCreateTable, self).__call__(hash)
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         # this is a bit counterproductive, should tell that we don't change the flux, or delegate this to databaseload
         # or something
         yield hash
-
-
-
-
-
 

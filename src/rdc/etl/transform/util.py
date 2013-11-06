@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import sys
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
@@ -56,14 +57,14 @@ class Log(Transform):
 
         return '\n'.join(s)
 
-    def output(self, s):
+    def writeln(self, s):
         """Output method."""
-        print self.format(s)
+        sys.stderr.write(s + '\n')
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         """Actual transformation."""
         if not self.condition or self.condition(hash):
-            self.output(repr(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter)))
+            self.writeln(repr(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter)))
         yield hash
 
 
@@ -72,7 +73,7 @@ class Stop(Transform):
 
     """
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         pass
 
 
@@ -94,7 +95,7 @@ class Halt(Transform):
 
         self.skip = skip or self.skip
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         if self.skip and self.skip > 0:
             self.skip -= 1
             yield hash
@@ -116,7 +117,7 @@ class Override(Transform):
         super(Override, self).__init__()
         self.override_data = override_data or self.override_data
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         yield hash.update(self.override_data)
 
 
@@ -125,6 +126,6 @@ class Clean(Transform):
     Remove all fields with keys starting by _
     """
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         yield hash.restrict(lambda k: not k.startswith('_'))
 

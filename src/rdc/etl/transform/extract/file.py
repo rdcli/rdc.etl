@@ -15,13 +15,13 @@
 # limitations under the License.
 
 from werkzeug.utils import cached_property
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 from rdc.etl.util import create_http_reader, create_file_reader
 
 
 class FileExtract(Transform):
-    """Deprecated in favor of FileJoin (XXX note to myself: why ?)
-    """
+    """Deprecated in favor of FileJoin (XXX note to myself: why ?)"""
 
     uri = None
     output_field = '_'
@@ -46,7 +46,6 @@ class FileExtract(Transform):
     def content(self):
         return self.reader()
 
-    def transform(self, hash):
-        hash.set(self.output_field, self.content)
-        yield hash
+    def transform(self, hash, channel=STDIN):
+        yield hash.set(self.output_field, self.content)
 
