@@ -69,6 +69,8 @@ setup(name='rdc.etl',
         'BeautifulSoup',
         'requests',
         'unidecode',
+        'werkzeug', # how to get cached_property without this ? btw, the webapp2 version is better
+        'sqlalchemy',
       ],
       entry_points="""
       # -*- Entry points: -*-

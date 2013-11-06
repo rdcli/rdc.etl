@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from rdc.etl.hash import Hash
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
@@ -63,16 +64,15 @@ class Join(Transform):
         """
         pass
 
-
-    def transform(self, h):
-        join_data = self.get_join_data_for(h)
+    def transform(self, hash, channel=STDIN):
+        join_data = self.get_join_data_for(hash)
 
         cnt = 0
         if join_data:
             for data in join_data:
-                yield h.copy(data)
+                yield hash.copy(data)
                 cnt += 1
 
         if not cnt and self.is_outer:
-            yield h.copy(self.default_outer_join_data)
+            yield hash.copy(self.default_outer_join_data)
 

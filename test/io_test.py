@@ -15,29 +15,13 @@
 # limitations under the License.
 
 import unittest
-
-from rdc.etl.io.reader import Reader, Readable
-
-
-class MyReadable(Readable):
-    def __init__(self, uri):
-        super(MyReadable, self).__init__()
-        self._uri = uri
-
-    def read(self):
-        return 'read the ' + self._uri
+from rdc.etl.io import CommunicationChannelCollection
 
 
-class MyReader(Reader):
-    readable = MyReadable
-
-
-class TestIO(unittest.TestCase):
-    def test_reader(self):
-        reader = MyReader()
-        with reader.open('foo') as r:
-            value = r.read()
-        self.assertEqual(value, 'read the foo')
+class CommunicationChannelCollectionTestCase(unittest.TestCase):
+    def test(self):
+        c = CommunicationChannelCollection([0, 1, 2, ])
+        c.get_queue()
 
 
 if __name__ == '__main__':

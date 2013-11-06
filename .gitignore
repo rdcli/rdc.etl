@@ -1,5 +1,6 @@
 # Python
 *.pyc
+/.py-env
 
 # PyCharm files
 /.idea

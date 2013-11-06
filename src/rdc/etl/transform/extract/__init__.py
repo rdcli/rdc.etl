@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
@@ -50,10 +51,9 @@ class Extract(Transform):
 
         self.stream_data = stream_data or self.stream_data
 
-    def transform(self, h):
+    def transform(self, hash, channel=STDIN):
         stream_data = self.stream_data() if callable(self.stream_data) else self.stream_data
 
         if stream_data:
             for data in stream_data:
-                out = h.copy(data)
-                yield out
+                yield hash.copy(data)

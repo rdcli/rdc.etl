@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from sqlalchemy import MetaData, Table
 from werkzeug.utils import cached_property
 from rdc.etl.transform import Transform
@@ -110,7 +111,7 @@ class BaseDatabaseLoad(Transform):
 
         return hash
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         with self.connection.begin():
             yield self.do_transform(hash)
 
@@ -139,7 +140,7 @@ class DatabaseLoad(BaseDatabaseLoad):
                 hash = self.buffer.pop(0)
                 yield self.do_transform(hash)
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         self.buffer.append(hash)
 
         if len(self.buffer) >= 1000:

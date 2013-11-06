@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import
 import csv
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 try:
@@ -45,7 +46,7 @@ class CsvMap(Transform):
     def has_headers(self):
         return bool(self.headers)
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         s_in = StringIO.StringIO(hash.get(self.field))
         reader = csv.reader(s_in, delimiter=self.delimiter, quotechar=self.quotechar)
         headers = self.has_headers and self.headers or reader.next()

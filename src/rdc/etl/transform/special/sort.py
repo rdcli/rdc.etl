@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
 class Sort(Transform):
     """
-    Fast'n'dirty implementation of a software sorting transform. As we need to stack up all the stream rows in our
+    Fast'n'dirty implementation of a software "sort" transform. As we need to stack up all the stream rows in our
     instance before we can start freeing them, this is most of the time a bad idea to use this. Always prefer to sort
     your rows the earliest possible, for example in a DatabaseExtract.
 
@@ -52,10 +53,9 @@ class Sort(Transform):
     def initialize(self):
         self._sorted = []
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         key = hash.get_values(self.key)
         self.__insert_in_place(key, hash)
-
 
     def finalize(self):
         for key, value in self._sorted:
