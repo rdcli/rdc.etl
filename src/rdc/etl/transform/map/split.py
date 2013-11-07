@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 import re
 from rdc.etl.transform import Transform
 
@@ -36,7 +37,7 @@ class SplitMap(Transform):
 
         self._current = 0
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         s_in = hash.get(self.field)
         for value in re.split(self.delimiter, s_in[self._current:], flags=re.MULTILINE):
             if self.skip > 0:

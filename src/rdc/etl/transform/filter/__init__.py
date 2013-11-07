@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
@@ -30,7 +31,7 @@ class SimpleFilter(Transform):
         super(SimpleFilter, self).__init__()
         self.filter = filter or self.filter
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         if not self.filter or not callable(self.filter):
             raise RuntimeError('No callable provided to ' + self.__class__.__name__ + '.')
 

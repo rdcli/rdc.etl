@@ -35,9 +35,14 @@ class ConsoleStatus(IStatus):
         self._lc = 0
 
     def update(self, transforms):
+        # while migrating to new io system, we need to support both list and dict
+        if not isinstance(transforms, dict):
+            transforms = dict([(id, transforms[id]) for id in range(0, len(transforms))])
+
         if self.ansi:
-            sys.stdout.write("\033[F" * (self._lc + 1))
+            sys.stdout.write("\033[F" * (self._lc))
             print "\033[K", "-" * 80
-            for transform in transforms:
-                print "\033[K   ", transform
-                self._lc = len(transforms)
+            for id, transform in transforms.items():
+                print "\033[K   ", id, transform
+            print "\033[K", "-" * 80
+            self._lc = len(transforms) + 2

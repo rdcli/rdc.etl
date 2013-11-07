@@ -17,9 +17,11 @@
 from __future__ import absolute_import
 import string
 import xml.etree.ElementTree
+from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 from watopy.util.html import unescape
 
+# XXX dependency on watopy, needs removal
 
 class XmlMap(Transform):
     field = None
@@ -56,7 +58,7 @@ class XmlMap(Transform):
 
         return d
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         xml_source = hash.get(self.field)
 
         if xml_source is None:
