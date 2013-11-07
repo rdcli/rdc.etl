@@ -1,0 +1,32 @@
+General roadmap
+===============
+
+* Basic documentation
+* Examples
+* Unit tests
+* "Job" tests
+
+1.0
+===
+
+* IO channels management:
+  * Multiple input/output possible for each transformation, with default channels
+  * "Converging stars" (V model), "diverging stars" (reverse V) and diamond should be possible.
+  * See how we deal with cycles, I guess a "health check" pass is necessary to ensure that all paths have an end.
+* Basic error handling (exceptions are destroying processes for now, and are unreadable on output.)
+
+1.1
+===
+
+* IO services management:
+    * database/webservices/mails/files/etc ...
+    * stats (r/w)
+* Better Log() (nice tables wanted)
+* Catchall for unplugged IO channels ? For example, all messages going to unplugged STDERR channels could be sent to a
+  given transform, so we can act (email ...)
+
+1.2
+===
+
+* Whatever will prove usefull until then.
+
