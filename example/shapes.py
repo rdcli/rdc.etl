@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import pprint
+from rdc.etl.status.console import ConsoleStatus
+from rdc.etl.transform.simple import SimpleTransform
 from rdc.etl.transform.util import Log
 from rdc.etl.transform.extract import Extract
 from rdc.etl.harness.threaded2 import ThreadedHarness as ThreadedHarness2
@@ -13,10 +16,11 @@ for Harness in ThreadedHarness, ThreadedHarness2:
     print "With %r" % Harness
     h = Harness()
     p1 = build_producer('p1')
-    h.chain_add(p1, Log())
+    t = SimpleTransform()
+    t.add('producer').filter('upper')
+    h.chain_add(p1, t, Log())
     h()
 
     print 'Summary:'
     pprint.pprint(h._transforms)
     print '\n'
-
