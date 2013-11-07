@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from rdc.etl.io import STDIN
 
 from rdc.etl.transform import Transform
 from rdc.etl.util import filter_html
@@ -172,7 +173,7 @@ class SimpleTransform(Transform):
         super(SimpleTransform, self).__init__()
         self._filters = list(filters)
 
-    def transform(self, hash):
+    def transform(self, hash, channel=STDIN):
         for name, value_getter in self.__dict__.items():
             if name[0] == '_':
                 continue
