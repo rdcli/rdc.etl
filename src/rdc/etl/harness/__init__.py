@@ -43,6 +43,7 @@ class AbstractHarness(IHarness):
 
     def __call__(self):
         self.initialize()
+        self.validate()
         _value = self.loop()
         self.finalize()
         return _value
@@ -53,4 +54,7 @@ class AbstractHarness(IHarness):
 
     @abstract
     def update_status(self):
+        pass
+
+    def validate(self):
         pass

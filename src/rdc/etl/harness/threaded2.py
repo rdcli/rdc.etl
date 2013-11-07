@@ -16,6 +16,7 @@
 
 import time
 from threading import Thread
+import sys
 from rdc.etl.harness import AbstractHarness
 from rdc.etl.io import TerminatedInputError, SingleItemQueue
 
@@ -78,7 +79,7 @@ class ThreadedHarness(AbstractHarness):
         # pointer to last added transform, so we can use the chain_add shortcut
         self._last_transform = None
 
-    def initialize(self):
+    def validate(self):
         for id, transform in self._transforms.items():
             if not transform.input.plugged:
                 transform.input.set_queue(SingleItemQueue())

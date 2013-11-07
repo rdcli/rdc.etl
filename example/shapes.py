@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import pprint
 from rdc.etl.status.console import ConsoleStatus
 from rdc.etl.transform.simple import SimpleTransform
