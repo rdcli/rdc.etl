@@ -13,20 +13,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import time
 
+import time
 from rdc.etl.hash import Hash
+from Queue import Queue as BaseQueue
 
 STDIN = 0
 STDIN2 = 1
 STDOUT = 0
 STDERR = 1
 
-from Queue import Queue as BaseQueue
-
 EndOfStream = object()
 BUFFER_SIZE = 8192
-
 
 class TerminatedIOError(IOError):
     pass
@@ -113,7 +111,7 @@ class CommunicationChannelCollection(object):
     auto_create = False
 
     def __init__(self, channels):
-        self.queues = {channel: None for channel in channels}
+        self.queues = dict([(channel, None) for channel in channels])
 
     def get_queue(self, channel=None):
         if channel is None:

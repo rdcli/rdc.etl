@@ -60,5 +60,5 @@ class CsvMap(Transform):
             if len(row) != field_count:
                 raise ValueError('Got a line with %d fields, expecting %d.' % (len(row), field_count, ))
 
-            yield hash.copy({self.field: row}).update({headers[i]: row[i] for i in range(0, field_count)})
+            yield hash.copy({self.field: row}).update(dict([(headers[i], row[i]) for i in range(0, field_count)]))
 
