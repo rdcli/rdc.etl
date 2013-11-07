@@ -106,7 +106,7 @@ class ThreadedHarness(AbstractHarness):
 
             # take a nap. Time here determine how often status is updated, and the maximum waste of time after all
             # threads finished.
-            time.sleep(0.5)
+            time.sleep(0.2)
 
         # Wait for all transform threads to die
         for id, thread in self._threads.items():
