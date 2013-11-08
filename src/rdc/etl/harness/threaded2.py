@@ -16,42 +16,11 @@
 
 import time
 from threading import Thread
-import sys
+import traceback
 from rdc.etl.harness import AbstractHarness
-from rdc.etl.io import TerminatedInputError, SingleItemQueue
+from rdc.etl.io import TerminatedInputError, SingleItemQueue, SinkQueue
 
-
-class TransformThread(Thread):
-    """Encapsulate a transformation in a thread, handle errors."""
-
-    def __init__(self, transform, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
-        super(TransformThread, self).__init__(group, target, name, args, kwargs, verbose)
-        self.transform = transform
-
-    def step(self, finalize=False):
-        try:
-            self.transform.step(finalize=finalize)
-        except TerminatedInputError, e:
-            raise
-        except Exception, e:
-            raise
-            self.transform.output.put_error(e)
-
-    def run(self):
-        while not self.transform.input.terminated:
-            try:
-                self.step()
-            except TerminatedInputError, e:
-                break
-
-        try:
-            self.step(finalize=True)
-        except TerminatedInputError, e:
-            pass
-
-    def __repr__(self):
-        return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
-
+_dev_null_queue = SinkQueue()
 
 class IdGenerator(object):
     """Simple integer sequence generator."""
@@ -67,6 +36,42 @@ class IdGenerator(object):
         return self.current
 
 
+class TransformThread(Thread):
+    """Encapsulate a transformation in a thread, handle errors."""
+    __thread_counter = IdGenerator()
+
+    def __init__(self, transform, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(TransformThread, self).__init__(group, target, name, args, kwargs, verbose)
+        self.transform = transform
+        self.__thread_number = self.__class__.__thread_counter.next()
+
+    def handle_error(self, exc, tb):
+        print exc + '\n\n' + tb + '\n\n\n\n'
+
+    @property
+    def name(self):
+        return self.transform.get_name() + '<' + str(self.__thread_number) + '>'
+
+    def run(self):
+        while not self.transform.input.terminated:
+            try:
+                self.transform.step()
+            except TerminatedInputError, e:
+                break
+            except Exception, e:
+                self.handle_error(e, traceback.format_exc())
+
+        try:
+            self.transform.step(finalize=True)
+        except TerminatedInputError, e:
+            pass
+        except Exception, e:
+            self.handle_error(e, traceback.format_exc())
+
+    def __repr__(self):
+        return (self.is_alive() and '+' or '-') + ' ' + self.name + ' ' + self.transform.get_stats_as_string()
+
+
 class ThreadedHarness(AbstractHarness):
     """Builder for ETL job python callables, using threads for parallelization."""
 
@@ -80,9 +85,17 @@ class ThreadedHarness(AbstractHarness):
         self._last_transform = None
 
     def validate(self):
+        """Validation of transform graph validity."""
+
         for id, transform in self._transforms.items():
-            if not transform.input.plugged:
-                transform.input.set_queue(SingleItemQueue())
+            # Adds a special single empty hash queue to unplugged inputs
+            for channel in transform.input.unplugged_channels:
+                transform.input.set_queue(SingleItemQueue(), channel=channel)
+
+            for channel in transform.output.unplugged_channels:
+                transform.output.set_queue(_dev_null_queue, channel=channel)
+
+
 
     def loop(self):
         # todo healthcheck ? (cycles ... dead ends ... orphans ...)
@@ -114,7 +127,7 @@ class ThreadedHarness(AbstractHarness):
 
     def update_status(self):
         for status in self.status:
-            status.update(self._transforms)
+            status.update(self._threads.values())
 
     # Methods below does not belong to API.
     def add(self, transform):

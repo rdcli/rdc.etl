@@ -116,6 +116,8 @@ class BaseDatabaseLoad(Transform):
             yield self.do_transform(hash)
 
 class DatabaseLoad(BaseDatabaseLoad):
+    buffer_size = 1000
+
     def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None,
                  updated_at_field=None, insert_only_fields=None):
         super(DatabaseLoad, self).__init__(engine, table_name, fetch_columns, discriminant, created_at_field,
@@ -143,13 +145,12 @@ class DatabaseLoad(BaseDatabaseLoad):
     def transform(self, hash, channel=STDIN):
         self.buffer.append(hash)
 
-        if len(self.buffer) >= 1000:
+        if len(self.buffer) >= self.buffer_size:
             for _out in self.commit():
                 yield _out
 
     def finalize(self):
         for _out in self.commit():
-            self._s_out += 1
             yield _out
 
         self.close_connection()

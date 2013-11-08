@@ -18,6 +18,7 @@ import time, types
 from Queue import Queue as BaseQueue
 from threading import Thread
 import traceback
+import sys
 from rdc.etl.hash import Hash
 from rdc.etl.harness import AbstractHarness
 

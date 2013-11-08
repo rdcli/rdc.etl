@@ -175,7 +175,7 @@ class SimpleTransform(Transform):
 
     def transform(self, hash, channel=STDIN):
         for name, value_getter in self.__dict__.items():
-            if name[0] == '_':
+            if name[0] == '_' or name in ('input', 'output', ):
                 continue
 
             try:

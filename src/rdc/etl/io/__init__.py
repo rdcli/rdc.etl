@@ -74,6 +74,12 @@ class SingleItemQueue(Queue):
         self.put(Hash())
         self.put(EndOfStream)
 
+class SinkQueue(Queue):
+    def put(self, item, block=True, timeout=None):
+        """This queue is a /dev/null"""
+        pass
+
+
 
 class MultiTailQueue(Queue):
     """
@@ -153,14 +159,15 @@ class CommunicationChannelCollection(object):
             # todo is this right ? can we consider that a no queue channel collection is "plugged" ?
             return True
 
-        if self.auto_create:
-            return True
-
         for id, queue in self.queues.items():
             if queue is not None:
                 return True
 
         return False
+
+    @property
+    def unplugged_channels(self):
+        return [channel for channel in self.queues if self.queues[channel] is None]
 
 
 class OutputChannelCollection(CommunicationChannelCollection):

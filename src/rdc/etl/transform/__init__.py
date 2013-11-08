@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from collections import OrderedDict
 
 import types
 from rdc.etl.hash import Hash
@@ -63,7 +64,6 @@ class Transform(object):
             if finalize and not self.finalized:
                 self.finalized = True
                 self.__execute_and_handle_output(self.finalize)
-
                 self.output.put_all(EndOfStream)
 
     @abstract
@@ -81,7 +81,19 @@ class Transform(object):
         pass
 
     def __repr__(self):
-        return '<' + self.__class__.__name__ + ' in=' + str(self._s_in) + ' out=' + str(self._s_out) + '>'
+        return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'
+
+    def get_name(self):
+        return  self.__class__.__name__
+
+    def get_stats(self):
+        return OrderedDict((
+            ('in', self._s_in),
+            ('out', self._s_out),
+        ))
+
+    def get_stats_as_string(self):
+        return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
 
     def __execute_and_handle_output(self, callable, *args, **kwargs):
         """Runs a transformation callable with given args/kwargs and flush the result into the right
