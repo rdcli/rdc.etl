@@ -130,12 +130,7 @@ class _SimpleItemTransformationDescriptor(object):
         value = getter(hash)
 
         for filter in self.filters:
-            try:
-                value = _apply_filter(value, hash, filter)
-            except Exception, e:
-                print "EXCEPTION CAUGHT: " + repr(e.__class__)
-                print 'hash: ', hash, 'name: ', _name, 'value: ', repr(value), 'filter: ', filter
-                return None
+            value = _apply_filter(value, hash, filter)
 
         return value
 
