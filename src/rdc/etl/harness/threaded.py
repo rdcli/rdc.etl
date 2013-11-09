@@ -14,165 +14,163 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time, types
-from Queue import Queue as BaseQueue
+import time
 from threading import Thread
 import traceback
-import sys
-from rdc.etl.hash import Hash
 from rdc.etl.harness import AbstractHarness
+from rdc.etl.io import TerminatedInputError, SingleItemQueue, SinkQueue, QUEUE_COLLECTIONS, Queue
+from rdc.etl.transform import Transform
 
-EOQ = object()
-QUEUE_MAX_SIZE = 8192
-
-
-class Queue(BaseQueue):
-    def __init__(self, maxsize=QUEUE_MAX_SIZE):
-        BaseQueue.__init__(self, maxsize)
+_dev_null_queue = SinkQueue()
 
 
-class SingleItemQueue(Queue):
-    def __init__(self, maxsize=QUEUE_MAX_SIZE):
-        Queue.__init__(self, maxsize)
-        self.put(Hash())
-        self.put(EOQ)
+class _IntSequenceGenerator(object):
+    """Simple integer sequence generator."""
+
+    def __init__(self):
+        self.current = 0
+
+    def get(self):
+        return self.current
+
+    def next(self):
+        self.current += 1
+        return self.current
 
 
-class MultiTailQueue(Queue):
-    """
-    A multi-tail queue is a regular one input channel queue that sends everything it gets in into its "tail" queues. If
-    possible, it will "copy" the input item, so we avoid concurrency transform problems. As every input data is getting
-    instantaneously flushed to the tails, get() method does not have any sense, and thus this should not be used as a
-    transform input, instead, use a tail for this.
+class TransformThread(Thread):
+    """Encapsulate a transformation in a thread, handle errors."""
+    __thread_counter = _IntSequenceGenerator()
 
-    The aim of this class is to be able to plug one output to multiple transformations' inputs, without having to worry
-    about concurrency. We may be a bit concerned about memory usage later (TODO), but for any reasonable use, it should
-    be ok.
-
-    """
-
-    def __init__(self, maxsize=QUEUE_MAX_SIZE, tails=None):
-        Queue.__init__(self, maxsize)
-
-        self._tails = tails or []
-
-    def put(self, item, block=True, timeout=None):
-        for tail in self._tails:
-            tail.put(hasattr(item, 'copy') and item.copy() or item, block, timeout)
-
-    def get(self, block=True, timeout=None):
-        raise RuntimeError('You cannot get() on a multi tail queue.')
-
-    def create_tail(self):
-        tail = Queue()
-        self._tails.append(tail)
-        return tail
-
-
-class ThreadedTransform(Thread):
-    def __init__(self, transform):
-        Thread.__init__(self)
-
+    def __init__(self, transform, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        super(TransformThread, self).__init__(group, target, name, args, kwargs, verbose)
         self.transform = transform
+        self.__thread_number = self.__class__.__thread_counter.next()
 
-        self.input = None
-        self.output = None
+    def handle_error(self, exc, tb):
+        print str(exc) + '\n\n' + tb + '\n\n\n\n'
 
-    def set_input_from(self, io_transform):
-        if io_transform.output is None:
-            # No output yet ? Let's create a basic queue.
-            self.input = Queue()
-            io_transform.output = self.input
-        elif isinstance(io_transform.output, Queue):
-            # Already a simple queue there ? Let's make it multi-tailed.
-            q = io_transform.output
-            io_transform.output = MultiTailQueue(tails=[q])
-            self.input = io_transform.output.create_tail()
-        elif isinstance(io_transform.output, MultiTailQueue):
-            # More than one output already, just need a new tail.
-            self.input = io_transform.output.create_tail()
-        else:
-            raise TypeError('I dont know what kind of output this is, man ...')
-
-        return io_transform
-
-    def _add_output(self, value):
-        if value:
-            if isinstance(value, types.GeneratorType):
-                for item in value:
-                    if self.output is not None:
-                        self.output.put(item)
-            else:
-                if self.output is not None:
-                    self.output.put(value)
+    @property
+    def name(self):
+        return self.transform.get_name() + '<' + str(self.__thread_number) + '>'
 
     def run(self):
-        input = self.input or SingleItemQueue()
-
-        self._add_output(self.transform.initialize())
-
-        while True:
-            _in = input.get()
-
-            if _in == EOQ:
-                self._add_output(self.transform.finalize())
-                if self.output is not None:
-                    self.output.put(EOQ)
-                break
-
+        while not self.transform._input.terminated:
             try:
-                _out = self.transform(_in)
-                self._add_output(_out)
-            except Exception, e:
-                print 'Exception caught in transform():', e.__class__.__name__, e.args[0]
-                traceback.print_exc()
+                self.transform.step()
+            except TerminatedInputError, e:
                 break
+            except Exception, e:
+                self.handle_error(e, traceback.format_exc())
+
+        try:
+            self.transform.step(finalize=True)
+        except TerminatedInputError, e:
+            pass
+        except Exception, e:
+            self.handle_error(e, traceback.format_exc())
 
     def __repr__(self):
-        return (self.is_alive() and '+' or '-') + ' ' + repr(self.transform)
+        return (self.is_alive() and '+' or '-') + ' ' + self.name + ' ' + self.transform.get_stats_as_string()
 
 
 class ThreadedHarness(AbstractHarness):
-    def loop(self):
-        for transform in self._transforms:
-            transform.start()
+    """Builder for ETL job python callables, using threads for parallelization."""
 
-        # Alive loop
+    def __init__(self):
+        super(ThreadedHarness, self).__init__()
+        self._transforms = {}
+        self._threads = {}
+        self._current_id = _IntSequenceGenerator()
+
+        # pointer to last added transform, so we can use the chain_add shortcut
+        self._last_transform = None
+
+    def validate(self):
+        """Validation of transform graph validity."""
+
+        for id, transform in self._transforms.items():
+            # Adds a special single empty hash queue to unplugged inputs
+            for channel in transform._input.unplugged_channels:
+                transform._input.set_queue(SingleItemQueue(), channel=channel)
+
+            for channel in transform._output.unplugged_channels:
+                transform._output.set_queue(_dev_null_queue, channel=channel)
+
+
+    def loop(self):
+        # todo healthcheck ? (cycles ... dead ends ... orphans ...)
+
+        # start all threads
+        for id, thread in self._threads.items():
+            thread.start()
+
+        # main loop until all threads are done
         while True:
             is_alive = False
-            for transform in self._transforms:
-                is_alive = is_alive or transform.is_alive()
+            for id, thread in self._threads.items():
+                is_alive = is_alive or thread.is_alive()
+
+            # communicate with the world
             self.update_status()
+
+            # exit point
             if not is_alive:
                 break
+
+            # take a nap. Time here determine how often status is updated, and the maximum waste of time after all
+            # threads finished.
             time.sleep(0.2)
 
-        # Wait for all transform threads to finish
-        for transform in self._transforms:
-            transform.join()
+        # Wait for all transform threads to die
+        for id, thread in self._threads.items():
+            thread.join()
 
     def update_status(self):
         for status in self.status:
-            status.update(self._transforms)
+            status.update(self._threads.values())
 
     # Methods below does not belong to API.
-    def __init__(self):
-        super(ThreadedHarness, self).__init__()
-        self._transforms = []
-
-        # pointer to last added transform, wo we can use the chain_add shortcut
-        self._last_transform = None
-
     def add(self, transform):
-        t = ThreadedTransform(transform)
-        self._transforms.append(t)
-        return t
+        id = self._current_id.next()
+        self._transforms[id] = transform
+        self._threads[id] = TransformThread(transform)
+        return transform # BC, maybe id would be a better thing to return (todo 2.0)
 
     def chain_add(self, *transforms):
         for transform in transforms:
-            io_transform = self.add(transform)
+            self.add(transform)
+
             if self._last_transform:
-                io_transform.set_input_from(self._last_transform)
-            self._last_transform = io_transform
+                if not self._last_transform._output.get_queue():
+                    self._last_transform._output.set_queue(Queue())
+                transform._input.plug(self._last_transform._output)
+
+            self._last_transform = transform
+
+    def add_chain(self, input=None, output=None, *transforms):
+        pass
+
+    def __find_input(self, mixed, default=0):
+        return self.__find_queue_collection_and_channel('input', mixed, default)
+
+    def __find_output(self, mixed, default=0):
+        return self.__find_queue_collection_and_channel('output', mixed, default)
+
+    def __find_queue_collection_and_channel(self, type, mixed, default=0):
+        assert type in QUEUE_COLLECTIONS, 'Type must be either input or output.'
+
+        if isinstance(mixed, Transform):
+            qcol, channel = getattr(mixed, '_' + type), default
+        elif isinstance(mixed, QUEUE_COLLECTIONS[type]):
+            qcol, channel = mixed, default
+        elif len(mixed) == 1:
+            qcol, channel = self.__find_queue_collection_and_channel(type, mixed[0], default)
+        elif len(mixed) != 2:
+            raise IOError('Unsupported %s given.' % (type, ))
+        else:
+            qcol, channel = self.__find_queue_collection_and_channel(type, mixed[0], default=mixed[1])
+
+        return qcol, channel
 
 

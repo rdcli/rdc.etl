@@ -17,7 +17,7 @@ from collections import OrderedDict
 
 import types
 from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputChannelCollection, OutputChannelCollection, TerminatedInputError, EndOfStream
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputQueueCollection, OutputQueueCollection, TerminatedInputError, EndOfStream
 
 
 class Transform(object):
@@ -28,43 +28,30 @@ class Transform(object):
         self._s_in = 0
         self._s_out = 0
 
-        self.input = InputChannelCollection(self.INPUT_CHANNELS)
-        self.output = OutputChannelCollection(self.OUTPUT_CHANNELS)
+        self._input = InputQueueCollection(self.INPUT_CHANNELS)
+        self._output = OutputQueueCollection(self.OUTPUT_CHANNELS)
 
-        self.initialized = False
-        self.finalized = False
-
-    def __call__(self, hash):
-        self._s_in += 1
-
-        t = self.transform(hash)
-
-        if isinstance(t, types.GeneratorType):
-            for _out in t:
-                self._s_out += 1
-                yield _out
-        elif t is not None:
-            self._s_out += 1
-            yield t
+        self._initialized = False
+        self._finalized = False
 
     def step(self, finalize=False):
-        if not self.initialized:
-            self.initialized = True
+        if not self._initialized:
+            self._initialized = True
             self.__execute_and_handle_output(self.initialize)
 
         try:
             # Pull data from the first available input channel (blocking)
-            hash, channel = self.input.get_any()
+            hash, channel = self._input.get_any()
             self._s_in += 1
             # Execute actual transformation
             self.__execute_and_handle_output(self.transform, hash, channel)
         except TerminatedInputError, e:
             pass
         finally:
-            if finalize and not self.finalized:
-                self.finalized = True
+            if finalize and not self._finalized:
+                self._finalized = True
                 self.__execute_and_handle_output(self.finalize)
-                self.output.put_all(EndOfStream)
+                self._output.put_all(EndOfStream)
 
     @abstract
     def transform(self, hash, channel=STDIN):
@@ -105,10 +92,10 @@ class Transform(object):
             for result in results:
                 # todo better stats
                 self._s_out += 1
-                self.output.put(*self.__normalize_output(result))
+                self._output.put(*self.__normalize_output(result))
         elif results is not None:
             self._s_out += 1
-            self.output.put(*self.__normalize_output(results))
+            self._output.put(*self.__normalize_output(results))
 
     def __normalize_output(self, result):
         """Take one of the various formats allowed as return value from transformation callables

@@ -15,12 +15,12 @@
 # limitations under the License.
 
 import unittest
-from rdc.etl.io import CommunicationChannelCollection
+from rdc.etl.io import QueueCollection
 
 
 class CommunicationChannelCollectionTestCase(unittest.TestCase):
     def test(self):
-        c = CommunicationChannelCollection([0, 1, 2, ])
+        c = QueueCollection([0, 1, 2, ])
         c.DEFAULT_CHANNEL = 0
         c.get_queue()
 

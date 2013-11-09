@@ -23,7 +23,15 @@ STDIN2 = 1
 STDOUT = 0
 STDERR = 1
 
-EndOfStream = object()
+class Token(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return '<%s>' % (self.name, )
+
+EndOfStream = Token('EndOfStream')
+
 BUFFER_SIZE = 8192
 
 class TerminatedIOError(IOError):
@@ -38,7 +46,17 @@ class TerminatedOutputError(TerminatedIOError):
     pass
 
 
-class Queue(BaseQueue):
+class IQueue(object):
+    @abstract
+    def put(self, data, block=True, timeout=None, channel=None):
+        pass
+
+    @abstract
+    def get(self, block=True, timeout=None, channel=None):
+        pass
+
+
+class Queue(IQueue, BaseQueue):
     def __init__(self, maxsize=BUFFER_SIZE):
         BaseQueue.__init__(self, maxsize)
         self.empty()
@@ -47,7 +65,7 @@ class Queue(BaseQueue):
 
     def put(self, item, block=True, timeout=None):
         if self._eos_received:
-            raise TerminatedOutputError('Cannot put() on a queue that already has received the EndOfStream marker.')
+            raise TerminatedOutputError('Cannot put() on a queue (%r) that already has received the EndOfStream marker.' % (self, ))
 
         if item == EndOfStream:
             self._eos_received = True
@@ -112,30 +130,17 @@ class MultiTailQueue(Queue):
         return tail
 
 
-class CommunicationChannelCollection(object):
-    DEFAULT_CHANNEL = None
-    auto_create = False
-
+class QueueCollection(IQueue):
     def __init__(self, channels):
         self.queues = dict([(channel, None) for channel in channels])
 
-    def get_queue(self, channel=None):
-        if channel is None:
-            channel = self.DEFAULT_CHANNEL
-
+    def get_queue(self, channel=0):
         if not channel in self.queues:
             raise KeyError('Cannot get queue for non existant channel %r.' % (channel))
 
-        if self.auto_create:
-            if self.queues[channel] is None:
-                self.queues[channel] = Queue()
-
         return self.queues[channel]
 
-    def set_queue(self, queue, channel=None):
-        if channel is None:
-            channel = self.DEFAULT_CHANNEL
-
+    def set_queue(self, queue, channel=0):
         if not channel in self.queues:
             raise KeyError('Cannot set queue for non existant channel %r.' % (channel))
 
@@ -147,11 +152,11 @@ class CommunicationChannelCollection(object):
     def get_queues(self):
         return [self.get_queue(channel) for channel in self.queues]
 
-    def put(self, data, channel=None):
-        self.get_queue(channel or self.DEFAULT_CHANNEL).put(data)
+    def put(self, data, block=True, timeout=None, channel=None):
+        self.get_queue(channel or 0).put(data, block=block, timeout=timeout)
 
-    def get(self, channel=None):
-        return self.get_queue(channel or self.DEFAULT_CHANNEL).get()
+    def get(self, block=True, timeout=None, channel=None):
+        return self.get_queue(channel or 0).get(block=block, timeout=timeout)
 
     @property
     def plugged(self):
@@ -169,39 +174,29 @@ class CommunicationChannelCollection(object):
     def unplugged_channels(self):
         return [channel for channel in self.queues if self.queues[channel] is None]
 
-
-class OutputChannelCollection(CommunicationChannelCollection):
-    DEFAULT_CHANNEL = STDOUT
-    ERROR_CHANNEL = STDERR
-
-    auto_create = True
-
+class OutputQueueCollection(QueueCollection):
     def __init__(self, channels=(STDOUT, STDERR, )):
-        super(OutputChannelCollection, self).__init__(channels)
+        super(OutputQueueCollection, self).__init__(channels)
 
-    def get(self, channel=None):
+    def get(self, block=True, timeout=None, channel=None):
         raise IOError('This channel is write-only, as a well disciplined output.')
-
-    def put_error(self, error):
-        raise error
-        raise NotImplementedError('todo, error management')
 
     def put_all(self, data):
         for channel in self.queues:
-            self.put(data, channel)
+            self.put(data, channel=channel)
 
 
-class InputChannelCollection(CommunicationChannelCollection):
-    DEFAULT_CHANNEL = STDIN
-
+class InputQueueCollection(QueueCollection):
     def __init__(self, channels=(STDIN, )):
-        super(InputChannelCollection, self).__init__(channels)
+        super(InputQueueCollection, self).__init__(channels)
 
-    def put(self, data, channel=None):
+    def put(self, data, block=True, timeout=None, channel=None):
         raise IOError('This channel is read-only, as a well disciplined input.')
 
     def plug(self, channel_collection, channel=0, channel_from=0):
-        self.set_queue(channel_collection.get_queue(channel_from), channel)
+        q = channel_collection.get_queue(channel_from)
+        assert q, 'Source queue must be initialized.'
+        self.set_queue(q, channel)
 
     def get_any(self):
         # todo documentation says .enpty() value is not reliable ... XXX
@@ -209,7 +204,7 @@ class InputChannelCollection(CommunicationChannelCollection):
             for id, queue in self.queues.items():
                 if not queue.empty():
                     return queue.get(), id
-            time.sleep(0.5)
+            time.sleep(0.2)
 
         raise TerminatedInputError('This input collection is terminated.')
 
@@ -220,4 +215,9 @@ class InputChannelCollection(CommunicationChannelCollection):
                 return False
             return True
 
+
+QUEUE_COLLECTIONS = {
+    'input': InputQueueCollection,
+    'output': OutputQueueCollection,
+}
 
