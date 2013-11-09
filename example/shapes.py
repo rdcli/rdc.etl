@@ -13,18 +13,29 @@ def build_simple_transform():
     t.add('producer').filter('upper')
     return t
 
-def run(title, harness):
-    print '>>> Test of simple linear shape'
-    retval = h()
-    print 'Summary:'
+def run(harness):
+    print
     pprint.pprint(h._transforms)
-    print 'h() return value:', retval
-    print '\n'
+    print
+    retval = h()
+    print '  -> return ', retval
+    print
 
-# Linear shape:
-# Extract -> SimpleTransform -> Log
+print('################')
+print('# Linear shape #')
+print('################')
+print
+print('Producer -> SimpleTransform -> Log')
 h = Harness()
 p1 = build_producer('producer 1')
-h.chain_add(p1, build_simple_transform(), Log())
-run('Test of simple linear shape', h)
+h.add_chain(p1, build_simple_transform(), Log())
+run(h)
+
+print('###############')
+print('# Split shape #')
+print('###############')
+print
+print('Producer -> Split -> SimpleTransform1 -> Log1')
+print('                 `-> SimpleTransform2 -> Log2')
+h = Harness()
 

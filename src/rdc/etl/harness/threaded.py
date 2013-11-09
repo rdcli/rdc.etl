@@ -83,9 +83,6 @@ class ThreadedHarness(AbstractHarness):
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
 
-        # pointer to last added transform, so we can use the chain_add shortcut
-        self._last_transform = None
-
     def validate(self):
         """Validation of transform graph validity."""
 
@@ -137,19 +134,37 @@ class ThreadedHarness(AbstractHarness):
         self._threads[id] = TransformThread(transform)
         return transform # BC, maybe id would be a better thing to return (todo 2.0)
 
-    def chain_add(self, *transforms):
+    def add_chain(self, *transforms, **kwargs):
+        if not len(transforms):
+            raise Exception('At least one transform should be provided to form a chain.')
+
+        input, output, input_channel, output_channel = None, None, None, None
+
+        # Carefull! Input parameter should be an _output_ that we'll plug into our chain input.
+        if 'input' in kwargs:
+            input, input_channel = self.__find_output(kwargs['input'])
+
+        # Carefull! Output parameter should be an _input_ that we'll plug into our chain input.
+        if 'output' in kwargs:
+            output, output_channel = self.__find_input(kwargs['output'])
+
+        last_transform = None
+        first_transform = transforms[0]
         for transform in transforms:
             self.add(transform)
+            if last_transform:
+                self.__plug(last_transform._output, 0, transform._input, 0)
+            last_transform = transform
 
-            if self._last_transform:
-                if not self._last_transform._output.get_queue():
-                    self._last_transform._output.set_queue(Queue())
-                transform._input.plug(self._last_transform._output)
+        if input:
+            # input contains the output of previous transform.
+            self.__plug(input, input_channel, first_transform._input, 0)
 
-            self._last_transform = transform
+        if output:
+            # output contains the input we will plug our output into.
+            self.__plug(last_transform._output, 0, output, output_channel)
 
-    def add_chain(self, input=None, output=None, *transforms):
-        pass
+    # Private stuff.
 
     def __find_input(self, mixed, default=0):
         return self.__find_queue_collection_and_channel('input', mixed, default)
@@ -172,5 +187,10 @@ class ThreadedHarness(AbstractHarness):
             qcol, channel = self.__find_queue_collection_and_channel(type, mixed[0], default=mixed[1])
 
         return qcol, channel
+
+    def __plug(self, from_output_qcol, from_output_channel, to_input_qcol, to_input_channel):
+        if not from_output_qcol.get_queue(from_output_channel):
+            from_output_qcol.set_queue(Queue(), from_output_channel)
+        to_input_qcol.plug(from_output_qcol, channel=to_input_channel, channel_from=from_output_channel)
 
 
