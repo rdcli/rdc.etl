@@ -13,9 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import OrderedDict
 
 import types
+# todo make this python2.6 compatible
+from collections import OrderedDict
 from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN, STDOUT, STDERR, InputQueueCollection, OutputQueueCollection, TerminatedInputError, EndOfStream
 
@@ -34,6 +35,10 @@ class Transform(object):
         self._initialized = False
         self._finalized = False
 
+    @property
+    def virgin(self):
+        return not self._initialized and not self._finalized
+
     def step(self, finalize=False):
         if not self._initialized:
             self._initialized = True
@@ -47,6 +52,8 @@ class Transform(object):
             self.__execute_and_handle_output(self.transform, hash, channel)
         except TerminatedInputError, e:
             pass
+        except Exception, e:
+            raise
         finally:
             if finalize and not self._finalized:
                 self._finalized = True
@@ -92,10 +99,12 @@ class Transform(object):
             for result in results:
                 # todo better stats
                 self._s_out += 1
-                self._output.put(*self.__normalize_output(result))
+                data, channel = self.__normalize_output(result)
+                self._output.put(data, channel=channel)
         elif results is not None:
             self._s_out += 1
-            self._output.put(*self.__normalize_output(results))
+            data, channel = self.__normalize_output(results)
+            self._output.put(data, channel=channel)
 
     def __normalize_output(self, result):
         """Take one of the various formats allowed as return value from transformation callables

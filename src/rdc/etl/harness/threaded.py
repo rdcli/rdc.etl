@@ -151,6 +151,8 @@ class ThreadedHarness(AbstractHarness):
         last_transform = None
         first_transform = transforms[0]
         for transform in transforms:
+            if not transform.virgin:
+                raise RuntimeError('You can\'t reuse a transform for now.')
             self.add(transform)
             if last_transform:
                 self.__plug(last_transform._output, 0, transform._input, 0)

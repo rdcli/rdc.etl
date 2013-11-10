@@ -21,7 +21,8 @@ from Queue import Queue as BaseQueue
 STDIN = 0
 STDIN2 = 1
 STDOUT = 0
-STDERR = 1
+STDERR = -1
+STDOUT2 = 1
 
 class Token(object):
     def __init__(self, name):
@@ -206,7 +207,7 @@ class InputQueueCollection(QueueCollection):
                     return queue.get(), id
             time.sleep(0.2)
 
-        raise TerminatedInputError('This input collection is terminated.')
+        raise TerminatedInputError('This input queue collection is terminated.')
 
     @property
     def terminated(self):
