@@ -26,13 +26,10 @@ setup(name='rdc.etl',
           >>> transform.add('foo').filter('upper')
           >>> from rdc.etl.transform.util import Log
           >>> load = Log()
-          >>> harness.chain_add(extract, transform, load)
+          >>> harness.add_chain(extract, transform, load)
           >>> harness()
 
-      This is a work in progress, although it it used for a few different
-      production systems, it may or may not fit your need, and you should
-      expect to have to dive into the code for now, as neither documentation or
-      tests are there to help.
+      This is a work in progress.
 
       """,
       classifiers=[

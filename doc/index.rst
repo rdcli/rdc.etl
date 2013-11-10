@@ -12,10 +12,8 @@ Overview
 
 Extract Transform Load (ETL) toolkit for python.
 
-Toolkit for doing data integration related work. Unlike java based tools like
-talend or pentaho data-integration, this is a DIY framework, and if you're
-looking for a WYSIWIG ETL engine, you should probably go back to the previously
-cited ones.
+Toolkit for doing data integration related work. This is a DIY framework, and if you're
+looking for a WYSIWIG ETL engine, this is probably not what you're looking for.
 
 
 Create a Harness
@@ -63,30 +61,23 @@ default input channel), but we'll use it as such for demonstration purpose.
 Tie transformations together
 ::::::::::::::::::::::::::::
 
-The default harness has a `chain_add` shortcut that allows to easily create and
+The default harness has a `add_chain` shortcut that allows to easily create and
 connect together a linear chain of transformations (by linear, we mean that
 every transform default output channel is connected to the next transformation
 default input channel). This is a very common case, and should be enough to
 play around a bit.
 
->>> harness.chain_add(extract, transform, load)
+>>> harness.add_chain(extract, transform, load)
 
 This code, without using the shortcut, would need to be written as follow.
 
->>> _extract = harness.add(extract)
->>> _transform = harness.add(transform)
->>> _transform.set_input_from(_extract)
->>> _load = harness.add(load)
->>> _load.set_input_from(_transform)
+>>> harness.add(extract)
+>>> harness.add(transform)
+>>> harness.add(load)
+>>> transform._input.plug(extract._output)
+>>> load._input.plug(transform._output)
 
-The difference between original transformation instances and their underscore
-prefixed counterpart (for example, difference between extract and _extract) is
-that the underscor one is an instance `ThreadedTransform`, which is a decorator
-adding threading ability _and_ io queues. You won't be able to
-.`set_input_from`() on or from a non decorated transformation.
-
-This API is a work in progress, and IO channels are being reworked. Expect
-changes on this part.
+This API is a work in progress.
 
 
 Run the job
