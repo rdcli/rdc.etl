@@ -10,10 +10,11 @@ General roadmap
 ===
 
 * IO channels management:
-  * Multiple input/output possible for each transformation, with default channels
+  * Multiple input/output possible for each transformation, with default channels (DONE)
   * "Converging stars" (V model), "diverging stars" (reverse V) and diamond should be possible.
   * See how we deal with cycles, I guess a "health check" pass is necessary to ensure that all paths have an end.
 * Basic error handling (exceptions are destroying processes for now, and are unreadable on output.)
+* React to Control-C (KeyboardInterrupt)
 
 1.1
 ===
