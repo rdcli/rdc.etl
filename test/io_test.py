@@ -15,14 +15,50 @@
 # limitations under the License.
 
 import unittest
-from rdc.etl.io import QueueCollection
+from Queue import Empty
+from rdc.etl.io import Input, InactiveWritableError, Begin, End, InactiveReadableError
 
 
-class CommunicationChannelCollectionTestCase(unittest.TestCase):
-    def test(self):
-        c = QueueCollection([0, 1, 2, ])
-        c.DEFAULT_CHANNEL = 0
-        c.get_queue()
+class InputTestCase(unittest.TestCase):
+    def test_input(self):
+        q = Input()
+
+        # Before Begin, noone should be able to write in an Input queue.
+        self.assertEqual(q.alive, False)
+        self.assertRaises(InactiveWritableError, q.put, 'foo')
+
+        # Begin
+        q.put(Begin)
+        self.assertEqual(q.alive, True)
+        self.assertEqual(q._runlevel, 1)
+        q.put('foo')
+
+        # Second Begin
+        q.put(Begin)
+        self.assertEqual(q.alive, True)
+        self.assertEqual(q._runlevel, 2)
+        q.put('bar')
+        q.put(End)
+
+        # FIFO
+        self.assertEqual(q.get(), 'foo')
+        self.assertEqual(q.get(), 'bar')
+
+        # self.assertEqual(q.alive, False) XXX queue don't know it's dead yet, but it is ...
+        # Async get raises Empty (End is not returned)
+        self.assertRaises(Empty, q.get, block=False)
+        self.assertEqual(q.alive, True)
+
+        # Before killing, let's slide some data in.
+        q.put('baz')
+
+        # now kill the queue, try to write
+        q.put(End)
+        self.assertRaises(InactiveWritableError, q.put, 'foo')
+
+        # still can get remaining data
+        self.assertEqual(q.get(), 'baz')
+        self.assertRaises(InactiveReadableError, q.get)
 
 
 if __name__ == '__main__':

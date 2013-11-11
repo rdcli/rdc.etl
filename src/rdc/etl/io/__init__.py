@@ -167,7 +167,9 @@ class Input(IReadable, IWritable, Queue):
 
         if data == End:
             self._runlevel -= 1
-            raise InactiveReadableError('Cannot get() on an inactive IReadable (runlevel just reached 0).')
+            if not self.alive:
+                raise InactiveReadableError('Cannot get() on an inactive IReadable (runlevel just reached 0).')
+            return self.get(block, timeout)
 
         return data
 
