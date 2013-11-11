@@ -15,24 +15,32 @@ setup(name='rdc.etl',
       WYSIWIG ETL engine, you should probably go back to the previously cited
       ones.
 
-      Not so relevant example:
+      Create a harness.
 
-          >>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
-          >>> harness = Harness()
-          >>> from rdc.etl.transform.extract import Extract
-          >>> extract = Extract(stream_data=({'foo': 'bar'}, {'foo': 'baz'}))
-          >>> from rdc.etl.transform.simple import SimpleTransform
-          >>> transform = SimpleTransform()
-          >>> transform.add('foo').filter('upper')
-          >>> from rdc.etl.transform.util import Log
-          >>> load = Log()
-          >>> harness.chain_add(extract, transform, load)
-          >>> harness()
+      >>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
+      >>> harness = Harness()
 
-      This is a work in progress, although it it used for a few different
-      production systems, it may or may not fit your need, and you should
-      expect to have to dive into the code for now, as neither documentation or
-      tests are there to help.
+      Create some data transformations.
+
+      >>> from rdc.etl.transform.extract import Extract
+      >>> extract = Extract(stream_data=({'foo': 'bar'}, {'foo': 'baz'}))
+
+      >>> from rdc.etl.transform.simple import SimpleTransform
+      >>> transform = SimpleTransform()
+      >>> transform.add('foo').filter('upper')
+
+      >>> from rdc.etl.transform.util import Log
+      >>> load = Log()
+
+      Tie everything together.
+
+      >>> harness.add_chain(extract, transform, load)
+
+      Run.
+
+      >>> harness()
+
+      This is a work in progress, the 1.0 API may change until 1.0 is released.
 
       """,
       classifiers=[
@@ -41,17 +49,15 @@ setup(name='rdc.etl',
         'Intended Audience :: Information Technology',
         'Intended Audience :: System Administrators',
         'Intended Audience :: Developers',
-        'License :: Other/Proprietary License',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Natural Language :: English',
         'Programming Language :: Python',
         'Topic :: Database',
         'Topic :: Utilities',
         'Topic :: Text Processing :: Filters',
-        'Topic :: Text Processing :: Indexing',
-
       ],
-      keywords='',
+      keywords='ETL Data-Integration',
       author='Romain Dorgueil',
       author_email='romain@dorgueil.net',
       url='https://rdc.li/etl/',
@@ -62,7 +68,7 @@ setup(name='rdc.etl',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-        # todo most of the deps are optional and depends on what we wanna
+        # todo: most of the deps are optional and depends on what we wanna
         # actually use, make it so nothing is required, but still travis
         # install the needed ones and an exception is raised when one tries to
         # use a component with a dependency without having it installed first.

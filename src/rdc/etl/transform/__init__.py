@@ -13,11 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import OrderedDict
 
 import types
+# todo make this python2.6 compatible
+from collections import OrderedDict
 from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputChannelCollection, OutputChannelCollection, TerminatedInputError, EndOfStream
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, InactiveReadableError, Begin, End
 
 
 class Transform(object):
@@ -28,51 +29,36 @@ class Transform(object):
         self._s_in = 0
         self._s_out = 0
 
-        self.input = InputChannelCollection(self.INPUT_CHANNELS)
-        self.output = OutputChannelCollection(self.OUTPUT_CHANNELS)
+        self._input = InputMultiplexer(self.INPUT_CHANNELS)
+        self._output = OutputDemultiplexer(self.OUTPUT_CHANNELS)
 
-        self.initialized = False
-        self.finalized = False
-
-    def __call__(self, hash):
-        self._s_in += 1
-
-        t = self.transform(hash)
-
-        if isinstance(t, types.GeneratorType):
-            for _out in t:
-                self._s_out += 1
-                yield _out
-        elif t is not None:
-            self._s_out += 1
-            yield t
+        self._initialized = False
+        self._finalized = False
 
     def step(self, finalize=False):
-        if not self.initialized:
-            self.initialized = True
+        if not self._initialized:
+            self._initialized = True
             self.__execute_and_handle_output(self.initialize)
 
         try:
             # Pull data from the first available input channel (blocking)
-            hash, channel = self.input.get_any()
+            data, channel = self._input.get()
             self._s_in += 1
             # Execute actual transformation
-            self.__execute_and_handle_output(self.transform, hash, channel)
-        except TerminatedInputError, e:
-            pass
+            self.__execute_and_handle_output(self.transform, data, channel)
         finally:
-            if finalize and not self.finalized:
-                self.finalized = True
+            if finalize and not self._finalized:
+                self._finalized = True
                 self.__execute_and_handle_output(self.finalize)
-                self.output.put_all(EndOfStream)
+                self._output.put_all(End)
+
+    def initialize(self):
+        """If you need to execute code before any item is transformed, this is the place."""
+        pass
 
     @abstract
     def transform(self, hash, channel=STDIN):
         """Core transformation method that will be called for each input data row."""
-        pass
-
-    def initialize(self):
-        """If you need to execute code before any item is transformed, this is the place."""
         pass
 
     def finalize(self):
@@ -80,8 +66,9 @@ class Transform(object):
         buffering transformations, or other blocking types."""
         pass
 
-    def __repr__(self):
-        return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'
+    @property
+    def virgin(self):
+        return not self._initialized and not self._finalized
 
     def get_name(self):
         return  self.__class__.__name__
@@ -95,6 +82,10 @@ class Transform(object):
     def get_stats_as_string(self):
         return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
 
+
+    def __repr__(self):
+        return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'
+
     def __execute_and_handle_output(self, callable, *args, **kwargs):
         """Runs a transformation callable with given args/kwargs and flush the result into the right
         output channel.
@@ -102,29 +93,11 @@ class Transform(object):
         results = callable(*args, **kwargs)
         # Put data onto output channels
         if isinstance(results, types.GeneratorType):
-            for result in results:
+            for data in results:
                 # todo better stats
                 self._s_out += 1
-                self.output.put(*self.__normalize_output(result))
+                self._output.put(data)
         elif results is not None:
             self._s_out += 1
-            self.output.put(*self.__normalize_output(results))
-
-    def __normalize_output(self, result):
-        """Take one of the various formats allowed as return value from transformation callables
-        (initialize/transform/finalize) and returns a 2 element tuple (data, channel).
-        """
-        if isinstance(result, Hash):
-            data, channel = result, self.OUTPUT_CHANNELS[0]
-        elif len(result) == 1:
-            data, channel = result[0], self.OUTPUT_CHANNELS[0]
-        elif len(result) != 2:
-            raise IOError('Unsupported output format from transform().')
-        else:
-            data, channel = result
-
-        if channel not in self.OUTPUT_CHANNELS:
-            raise IOError('Invalid channel %r selected for transform() output.' % (channel, ))
-
-        return data, channel
+            self._output.put(results)
 

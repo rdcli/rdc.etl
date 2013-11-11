@@ -20,16 +20,17 @@ from rdc.etl.transform import Transform
 
 
 class SplitMap(Transform):
-    field = None
-    output_field = None
+    """"""
+    field = '_'
+    output_field = '_'
     delimiter = r'\s+'
     content = r'(.*)'
     skip = 0
 
-    def __init__(self, field, output_field=None, delimiter=None, content=None, skip=None):
+    def __init__(self, field=None, output_field=None, delimiter=None, content=None, skip=None):
         super(SplitMap, self).__init__()
 
-        self.field = field
+        self.field = field or self.field
         self.output_field = output_field or field
         self.delimiter = delimiter or self.delimiter
         self.content = content or self.content
@@ -48,3 +49,4 @@ class SplitMap(Transform):
                 .copy() \
                 .remove(self.field) \
                 .set(self.output_field, value)
+

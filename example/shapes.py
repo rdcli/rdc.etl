@@ -1,25 +1,68 @@
 import pprint
-from rdc.etl.status.console import ConsoleStatus
+from rdc.etl.io import STDOUT, STDOUT2
 from rdc.etl.transform.simple import SimpleTransform
+from rdc.etl.transform.split import Split
 from rdc.etl.transform.util import Log
 from rdc.etl.transform.extract import Extract
-from rdc.etl.harness.threaded2 import ThreadedHarness as ThreadedHarness2
-from rdc.etl.harness.threaded import ThreadedHarness
+from rdc.etl.harness.threaded import ThreadedHarness as Harness
 
-def build_producer(name):
-    return Extract(({'producer': name, 'id': 1}, {'producer': name, 'id': 2}))
+def build_producer(name, count=3):
+    return Extract([{'producer': name, 'id': i + 1} for i in range(0, count)])
 
-print '>>> Test of simple linear shape'
-
-for Harness in ThreadedHarness, ThreadedHarness2:
-    print "With %r" % Harness
-    h = Harness()
-    p1 = build_producer('p1')
+def build_simple_transform(f='upper'):
     t = SimpleTransform()
-    t.add('producer').filter('upper')
-    h.chain_add(p1, t, Log())
-    h()
+    t.add('producer').filter(f)
+    return t
 
-    print 'Summary:'
-    pprint.pprint(h._transforms)
-    print '\n'
+def run(harness):
+    print
+    retval = h()
+    print
+    print 'Transformations (with post execution state):'
+    print '\n'.join(['  %s' % line for line in pprint.pformat(h._transforms).split('\n')])
+    print '  -> return ', retval
+    print
+
+
+print('################')
+print('# Linear shape #')
+print('################')
+print
+print('Producer -> SimpleTransform -> Log')
+
+h = Harness()
+p1 = build_producer('Producer 1')
+h.add_chain(p1, build_simple_transform(), Log())
+run(h)
+
+
+print('#####################################')
+print('# Split shape (2 different outputs) #')
+print('#####################################')
+print
+print('Producer -> Split ---(stdout)--> SimpleTransform1 -> Log1')
+print('                   `-(stdout2)-> SimpleTransform2 -> Log2')
+
+h = Harness()
+producer = build_producer('Producer 1', 10)
+split = Split(output_selector = lambda h: h.get('id') % 2 and STDOUT2 or STDOUT)
+h.add_chain(producer, split, build_simple_transform(), Log())
+h.add_chain(build_simple_transform('lower'), Log(), input=(split, STDOUT2, ))
+run(h)
+
+
+print('###########################################')
+print('# Split shape (single "multitail" output) #')
+print('############################################')
+print
+print('Producer -(stdout)--> SimpleTransform1 -> Log1')
+print('                  `-> SimpleTransform2 -> Log2')
+print
+print('Note: all producer output will be sent to both branch.')
+
+h = Harness()
+producer = build_producer('Producer 1', 2)
+h.add_chain(producer, build_simple_transform(), Log())
+h.add_chain(build_simple_transform('lower'), Log(), input=(producer, STDOUT, ))
+run(h)
+
