@@ -1,6 +1,5 @@
 import pprint
 from rdc.etl.io import STDOUT, STDOUT2
-from rdc.etl.status.console import ConsoleStatus
 from rdc.etl.transform.simple import SimpleTransform
 from rdc.etl.transform.split import Split
 from rdc.etl.transform.util import Log
@@ -19,7 +18,8 @@ def run(harness):
     print
     retval = h()
     print
-    pprint.pprint(h._transforms)
+    print 'Transformations (with post execution state):'
+    print '\n'.join(['  %s' % line for line in pprint.pformat(h._transforms).split('\n')])
     print '  -> return ', retval
     print
 
@@ -55,13 +55,13 @@ print('###########################################')
 print('# Split shape (single "multitail" output) #')
 print('############################################')
 print
-print('Producer -(stdout)-> SimpleTransform1 -> Log1')
-print('        `-(stdout)-> SimpleTransform2 -> Log2')
+print('Producer -(stdout)--> SimpleTransform1 -> Log1')
+print('                  `-> SimpleTransform2 -> Log2')
 print
 print('Note: all producer output will be sent to both branch.')
 
 h = Harness()
-producer = build_producer('Producer 1', 3)
+producer = build_producer('Producer 1', 2)
 h.add_chain(producer, build_simple_transform(), Log())
 h.add_chain(build_simple_transform('lower'), Log(), input=(producer, STDOUT, ))
 run(h)
