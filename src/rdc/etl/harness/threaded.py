@@ -18,11 +18,9 @@ import time
 from threading import Thread
 import traceback
 from rdc.etl.harness import AbstractHarness
-from rdc.etl.io import TerminatedInputError, SingleItemQueue, SinkQueue, QUEUE_COLLECTIONS, Queue
+from rdc.etl.hash import Hash
+from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
 from rdc.etl.transform import Transform
-
-_dev_null_queue = SinkQueue()
-
 
 class _IntSequenceGenerator(object):
     """Simple integer sequence generator."""
@@ -39,7 +37,8 @@ class _IntSequenceGenerator(object):
 
 
 class TransformThread(Thread):
-    """Encapsulate a transformation in a thread, handle errors."""
+    """Thread encapsulating a transformation. Handle errors."""
+
     __thread_counter = _IntSequenceGenerator()
 
     def __init__(self, transform, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
@@ -55,22 +54,25 @@ class TransformThread(Thread):
         return self.transform.get_name() + '<' + str(self.__thread_number) + '>'
 
     def run(self):
-        while not self.transform._input.terminated:
+        while True:
             try:
                 self.transform.step()
-            except TerminatedInputError, e:
+            except InactiveReadableError, e:
+                # Terminated, exit loop.
                 break
             except Exception, e:
                 self.handle_error(e, traceback.format_exc())
 
         try:
             self.transform.step(finalize=True)
-        except TerminatedInputError, e:
+        except InactiveReadableError, e:
+            # Obviously, ignore.
             pass
         except Exception, e:
             self.handle_error(e, traceback.format_exc())
 
     def __repr__(self):
+        """Adds "alive" information to the transform representation."""
         return (self.is_alive() and '+' or '-') + ' ' + self.name + ' ' + self.transform.get_stats_as_string()
 
 
@@ -85,17 +87,15 @@ class ThreadedHarness(AbstractHarness):
 
     def validate(self):
         """Validation of transform graph validity."""
-
         for id, transform in self._transforms.items():
             # Adds a special single empty hash queue to unplugged inputs
-            for channel in transform._input.unplugged_channels:
-                transform._input.set_queue(SingleItemQueue(), channel=channel)
-
-            for channel in transform._output.unplugged_channels:
-                transform._output.set_queue(_dev_null_queue, channel=channel)
-
+            for queue in transform._input.unplugged:
+                queue.put(Begin)
+                queue.put(Hash())
+                queue.put(End)
 
     def loop(self):
+        """Starts all the thread and loop forever until they are all dead."""
         # todo healthcheck ? (cycles ... dead ends ... orphans ...)
 
         # start all threads
@@ -124,15 +124,17 @@ class ThreadedHarness(AbstractHarness):
             thread.join()
 
     def update_status(self):
+        """Sends current status to all status objects. This API part is subject to changes."""
         for status in self.status:
             status.update(self._threads.values())
 
     # Methods below does not belong to API.
     def add(self, transform):
+        """Register a transformation, create a thread object to manage its future lifecycle."""
         id = self._current_id.next()
         self._transforms[id] = transform
         self._threads[id] = TransformThread(transform)
-        return transform # BC, maybe id would be a better thing to return (todo 2.0)
+        return transform # BC, maybe id would be a better thing to return (todo 2.0, or even 1.0 before api freeze)
 
     def add_chain(self, *transforms, **kwargs):
         if not len(transforms):
@@ -148,14 +150,18 @@ class ThreadedHarness(AbstractHarness):
         if 'output' in kwargs:
             output, output_channel = self.__find_input(kwargs['output'])
 
+        # Register the transformations and plug them together, as a chain.
         last_transform = None
         first_transform = transforms[0]
         for transform in transforms:
             if not transform.virgin:
                 raise RuntimeError('You can\'t reuse a transform for now.')
+
             self.add(transform)
+
             if last_transform:
                 self.__plug(last_transform._output, 0, transform._input, 0)
+
             last_transform = transform
 
         if input:
@@ -168,31 +174,29 @@ class ThreadedHarness(AbstractHarness):
 
     # Private stuff.
 
-    def __find_input(self, mixed, default=0):
-        return self.__find_queue_collection_and_channel('input', mixed, default)
+    def __find_input(self, mixed, default=DEFAULT_INPUT_CHANNEL):
+        return self.__find_io_and_channel('input', mixed, default)
 
-    def __find_output(self, mixed, default=0):
-        return self.__find_queue_collection_and_channel('output', mixed, default)
+    def __find_output(self, mixed, default=DEFAULT_OUTPUT_CHANNEL):
+        return self.__find_io_and_channel('output', mixed, default)
 
-    def __find_queue_collection_and_channel(self, type, mixed, default=0):
-        assert type in QUEUE_COLLECTIONS, 'Type must be either input or output.'
+    def __find_io_and_channel(self, type, mixed, default=0):
+        assert type in IO_TYPES, 'Invalid io type %r.' % (type, )
 
         if isinstance(mixed, Transform):
-            qcol, channel = getattr(mixed, '_' + type), default
-        elif isinstance(mixed, QUEUE_COLLECTIONS[type]):
-            qcol, channel = mixed, default
+            io, channel = getattr(mixed, '_' + type), default
+        elif isinstance(mixed, IO_TYPES[type]):
+            io, channel = mixed, default
         elif len(mixed) == 1:
-            qcol, channel = self.__find_queue_collection_and_channel(type, mixed[0], default)
+            io, channel = self.__find_io_and_channel(type, mixed[0], default)
         elif len(mixed) != 2:
-            raise IOError('Unsupported %s given.' % (type, ))
+            raise IOError('Unsupported %s given: %r.' % (type, mixed, ))
         else:
-            qcol, channel = self.__find_queue_collection_and_channel(type, mixed[0], default=mixed[1])
+            io, channel = self.__find_io_and_channel(type, mixed[0], default=mixed[1])
 
-        return qcol, channel
+        return io, channel
 
-    def __plug(self, from_output_qcol, from_output_channel, to_input_qcol, to_input_channel):
-        if not from_output_qcol.get_queue(from_output_channel):
-            from_output_qcol.set_queue(Queue(), from_output_channel)
-        to_input_qcol.plug(from_output_qcol, channel=to_input_channel, channel_from=from_output_channel)
+    def __plug(self, from_dmux, from_channel, to_mux, to_channel):
+        to_mux.plug(from_dmux, channel=to_channel, dmux_channel=from_channel)
 
 

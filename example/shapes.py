@@ -23,26 +23,46 @@ def run(harness):
     print '  -> return ', retval
     print
 
+
 print('################')
 print('# Linear shape #')
 print('################')
 print
 print('Producer -> SimpleTransform -> Log')
+
 h = Harness()
 p1 = build_producer('Producer 1')
 h.add_chain(p1, build_simple_transform(), Log())
 run(h)
 
-print('###############')
-print('# Split shape #')
-print('###############')
+
+print('#####################################')
+print('# Split shape (2 different outputs) #')
+print('#####################################')
 print
-print('Producer -> Split -> SimpleTransform1 -> Log1')
-print('                 `-> SimpleTransform2 -> Log2')
+print('Producer -> Split ---(stdout)--> SimpleTransform1 -> Log1')
+print('                   `-(stdout2)-> SimpleTransform2 -> Log2')
+
 h = Harness()
-producer = build_producer('Producer 1', 20)
+producer = build_producer('Producer 1', 10)
 split = Split(output_selector = lambda h: h.get('id') % 2 and STDOUT2 or STDOUT)
 h.add_chain(producer, split, build_simple_transform(), Log())
 h.add_chain(build_simple_transform('lower'), Log(), input=(split, STDOUT2, ))
+run(h)
+
+
+print('###########################################')
+print('# Split shape (single "multitail" output) #')
+print('############################################')
+print
+print('Producer -(stdout)-> SimpleTransform1 -> Log1')
+print('        `-(stdout)-> SimpleTransform2 -> Log2')
+print
+print('Note: all producer output will be sent to both branch.')
+
+h = Harness()
+producer = build_producer('Producer 1', 3)
+h.add_chain(producer, build_simple_transform(), Log())
+h.add_chain(build_simple_transform('lower'), Log(), input=(producer, STDOUT, ))
 run(h)
 
