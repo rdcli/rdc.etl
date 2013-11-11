@@ -94,6 +94,8 @@ class ThreadedHarness(AbstractHarness):
                 queue.put(Hash())
                 queue.put(End)
 
+            transform._output.put_all(Begin)
+
     def loop(self):
         """Starts all the thread and loop forever until they are all dead."""
         # todo healthcheck ? (cycles ... dead ends ... orphans ...)

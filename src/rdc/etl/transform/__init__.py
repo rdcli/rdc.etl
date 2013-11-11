@@ -38,7 +38,6 @@ class Transform(object):
     def step(self, finalize=False):
         if not self._initialized:
             self._initialized = True
-            self._output.put_all(Begin)
             self.__execute_and_handle_output(self.initialize)
 
         try:
