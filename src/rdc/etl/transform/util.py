@@ -89,34 +89,6 @@ class Stop(Transform):
         pass
 
 
-class Halt(Transform):
-    """Halt transform that exit process after a given number of skipped results. This may not have the effect you're
-    thinking, as the skipped hashes will still go through future transformations, and using sys.exit is probably a very
-    bad idea in the middle of a multithreaded process.
-
-    DON'T USE THIS, OR PREPARE TO SUFFER SEVERE HEADACHES.
-
-    @deprecated
-    @todo remove this shit
-
-    """
-    skip = 0
-
-    def __init__(self, skip=None):
-        super(Halt, self).__init__()
-
-        self.skip = skip or self.skip
-
-    def transform(self, hash, channel=STDIN):
-        if self.skip and self.skip > 0:
-            self.skip -= 1
-            yield hash
-
-        print hash
-        print '=== HALT ! ==='
-        sys.exit(1)
-
-
 class Override(Transform):
     """
     Simple transform that will overwrite some values with constant values provided in a Hash.
