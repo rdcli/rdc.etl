@@ -13,8 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import pprint
 import sys
+from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
@@ -46,25 +47,36 @@ class Log(Transform):
 
     def format(self, s):
         """Row formater."""
+
+        # pretty format Hashes
+        if isinstance(s, Hash):
+            s = pprint.pformat(dict(s.items()))
+
+        # unpack
         s = s.split('\n')
-        if not len(s[0].strip()):
+
+        # hack if one empty line
+        if len(s) < 2 and not len(s[0].strip()):
             return ''
 
+        # first line prefix
         s[0] = self.prefix + s[0]
 
+        # other lines prefixe
         if len(s) > 1:
             s[1:] = [self.prefix2 + line for line in s[1:]]
 
+        # pack it back
         return '\n'.join(s)
 
     def writeln(self, s):
         """Output method."""
-        sys.stderr.write(s + '\n')
+        sys.stderr.write(self.format(s) + '\n')
 
     def transform(self, hash, channel=STDIN):
         """Actual transformation."""
         if not self.condition or self.condition(hash):
-            self.writeln(repr(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter)))
+            self.writeln(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter))
         yield hash
 
 
