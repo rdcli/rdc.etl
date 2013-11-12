@@ -68,6 +68,9 @@ class Hash(object):
     def __repr__(self):
         return '<' + self.__class__.__name__ + ' ' + pformat(self.__dict__) + '>'
 
+    def __contains__(self, item):
+        return self.has(item)
+
     def restrict(self, tester, renamer=None):
         for k, v in self.__dict__.items():
             if not tester(k):
