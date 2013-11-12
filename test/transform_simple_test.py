@@ -26,10 +26,11 @@ class SimpleTransformCase(unittest.TestCase):
 
     def test_remove(self):
         t = self._create_transform()
-        t.remove('foo')
-        r = t.transform(Hash({'foo': 'bar', 'bar': 'baz'}))
+        t.remove('foo', 'boo')
+        r = t.transform(Hash({'foo': 'bar', 'bar': 'baz', 'boo': 'hiya'}))
         self.assertIn('bar', r)
         self.assertNotIn('foo', r)
+        self.assertNotIn('boo', r)
 
 if __name__ == '__main__':
     unittest.main()

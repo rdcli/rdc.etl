@@ -213,8 +213,7 @@ class SimpleTransform(Transform):
         """
         Removes a field in hash, using a post transform filter.
         """
-        for name in names:
-            self.filter(lambda t: t.remove(name))
+        self.filter(lambda t, names=names: t.remove(*names))
 
     def filter(self, filter):
         """

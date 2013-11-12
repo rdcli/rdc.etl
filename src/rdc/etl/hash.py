@@ -80,9 +80,10 @@ class Hash(object):
                 delattr(self, k)
         return self
 
-    def remove(self, key):
-        if key in self.__dict__:
-            self.__dict__.pop(key)
+    def remove(self, *keys):
+        for key in keys:
+            if key in self.__dict__:
+                self.__dict__.pop(key)
         return self
 
     def get_values(self, keys):
