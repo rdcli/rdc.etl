@@ -66,7 +66,7 @@ def insert_sorted(comparator, lst, key, value, start=0, end=None):
             return start
 
         # otherwise, consider the left hand interval (excluding pivot)
-        return insert_sorted(comparator, lst, key, value, start, pivot - start)
+        return insert_sorted(comparator, lst, key, value, start, pivot)
 
     # right side ?
     if side == 1:
@@ -81,7 +81,7 @@ def insert_sorted(comparator, lst, key, value, start=0, end=None):
             return start + 1
 
         # otherwise, consider the right hand interval (excluding pivot)
-        return insert_sorted(comparator, lst, key, value, pivot + 1, length - (pivot - start + 1))
+        return insert_sorted(comparator, lst, key, value, pivot + 1, end)
 
     # wtf ?
     raise ValueError('Invalid comparator return value %r.' % (side, ))

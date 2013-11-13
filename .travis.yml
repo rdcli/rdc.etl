@@ -5,4 +5,5 @@ install:
   - "pip install ."
 script:
   - python example/shapes.py
+  - python example/flow.py
   - nosetests
