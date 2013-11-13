@@ -48,14 +48,21 @@ class SortedJoin(Transform):
             yield data
 
     def consume(self):
-        while len(self._sorted[STDIN2]):
+        while  len(self._sorted[STDIN]) and len(self._sorted[STDIN2]):
             side = self.comparator(self._sorted[STDIN2][0][0], self._sorted[STDIN][0][0])
 
             if side == 0:
-                self.merger(self._sorted[STDIN][0][1], self._sorted[STDIN2].pop(0)[1])
+                # match, merge
+                _key, _data = self._sorted[STDIN2].pop(0)
+                pos = 0
+                while (pos < (len(self._sorted[STDIN]) - 1)) and (self.comparator(self._sorted[STDIN][pos][0], _key) == 0):
+                    self.merger(self._sorted[STDIN][pos][1], _data)
+                    pos += 1
             elif side == -1:
-                raise NotImplementedError('woops')
+                # no match, destroy
+                self._sorted[STDIN2].pop(0)
             elif side == 1:
+                # passed, yield possible
                 yield self._sorted[STDIN].pop(0)[1]
             else:
                 raise RuntimeError('invalid comparator return value')
