@@ -15,7 +15,6 @@
 # limitations under the License.
 
 from rdc.etl.io import STDOUT, STDOUT2, STDERR, STDIN
-
 from rdc.etl.transform import Transform
 
 

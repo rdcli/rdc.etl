@@ -74,10 +74,11 @@ class InputMultiplexer(IReadable):
         # todo documentation says .enpty() value is not reliable ... XXX
         while self.alive:
             for id, queue in self.queues.items():
-                if not queue.empty():
+                if queue.alive and not queue.empty():
                     # xxx useage of block/timeout here is wrong
                     data = queue.get(block, timeout)
                     return data, id
+
             # todo xxx take block and timeout into account
             time.sleep(0.2)
 
@@ -86,6 +87,11 @@ class InputMultiplexer(IReadable):
     def plug(self, dmux, channel=DEFAULT_INPUT_CHANNEL, dmux_channel=DEFAULT_OUTPUT_CHANNEL):
         dmux.plug_into(self.queues[channel], channel=dmux_channel)
         self._plugged.add(channel)
+
+    def __getitem__(self, item):
+        if not item in self.queues:
+            raise KeyError('No such input channel %r.' % (item, ))
+        return self.queues[item]
 
     @property
     def alive(self):
@@ -111,7 +117,7 @@ class OutputDemultiplexer(IWritable):
         data, channel = self.__demux(data)
 
         if not channel in self.channels:
-            raise IOError('Unknown channel')
+            raise IOError('Unknown channel %r.' % (channel, ))
 
         for target in self.channels[channel]:
             target.put(isinstance(data, Token) and data or copy(data), block, timeout)
@@ -126,6 +132,11 @@ class OutputDemultiplexer(IWritable):
         if target in self.channels[channel]:
             raise ValueError('Channel already have this target plugged for channel %r.' % (channel, ))
         self.channels[channel].append(target)
+
+    def __getitem__(self, item):
+        if not item in self.channels:
+            raise KeyError('No such output channel %r.' % (item, ))
+        return self.channels[item]
 
     def __demux(self, data):
         if isinstance(data, Hash):
@@ -172,6 +183,16 @@ class Input(IReadable, IWritable, Queue):
             return self.get(block, timeout)
 
         return data
+
+
+    def empty(self):
+        self.mutex.acquire()
+        while self._qsize() and self.queue[0] == End:
+            self._runlevel -= 1
+            Queue._get(self)
+        self.mutex.release()
+
+        return Queue.empty(self)
 
     @property
     def alive(self):

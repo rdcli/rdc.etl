@@ -48,7 +48,7 @@ class Hash(object):
         return self.__dict__.values()
 
     def update(self, dct):
-        self.__dict__.update(dct)
+        self.__dict__.update(dct.items())
         return self
 
     def get(self, key, default=None):
