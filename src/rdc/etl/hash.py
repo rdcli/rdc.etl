@@ -27,7 +27,12 @@ class Hash(object):
 
     def __init__(self, datadict=None):
         if datadict is not None:
-            for k, v in datadict.items():
+            try:
+                items = datadict.iteritems()
+            except AttributeError, e:
+                items = datadict
+
+            for k, v in items:
                 k = k.replace('.', '_')
                 setattr(self, k, v)
 
@@ -52,11 +57,26 @@ class Hash(object):
         return self
 
     def get(self, key, default=None):
-        return getattr(self, key, default)
+        """todo: decide which method is the right one for api, simplify"""
+        try:
+            if default is not None: 
+                return getattr(self, key, default)
+            else:
+                return getattr(self, key)
+        except AttributeError, e:
+            if default is not None:
+                return default
+            raise KeyError('No value found for key %r.' % (key, ))
+
+    def __getitem__(self, key):
+        return self.get(key)
 
     def set(self, key, value):
         setattr(self, key, value)
         return self
+
+    def __setitem__(self, key, value):
+        return self.set(key, value)
 
     def has(self, key, allow_none=False):
         if hasattr(self, key):
@@ -65,19 +85,20 @@ class Hash(object):
             return self.get(key) is not None
         return False
 
-    def __repr__(self):
-        return '<' + self.__class__.__name__ + ' ' + pformat(self.__dict__) + '>'
-
     def __contains__(self, item):
-        return self.has(item)
+        return self.has(item, True)
 
-    def restrict(self, tester, renamer=None):
+    def restrict(self, tester=None, renamer=None):
+        """
+        todo: simplify this as it does two things
+        """
         for k, v in self.__dict__.items():
-            if not tester(k):
+            if tester and not tester(k):
                 delattr(self, k)
             elif renamer:
                 setattr(self, renamer(k), v)
                 delattr(self, k)
+
         return self
 
     def remove(self, *keys):
@@ -89,4 +110,6 @@ class Hash(object):
     def get_values(self, keys):
         return [self.get(key) for key in keys]
 
+    def __repr__(self):
+        return '<' + self.__class__.__name__ + ' ' + pformat(self.__dict__) + '>'
 
