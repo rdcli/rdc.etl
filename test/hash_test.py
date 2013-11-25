@@ -108,14 +108,14 @@ class HashTestCase(unittest.TestCase):
         self.assertTrue('BAR' in h)
         self.assertEqual(h['BAR'], 'baz')
 
-    def test_restrict(self):
+    def test_remove(self):
         h = Hash({'foo': 'bar', 'bar': 'baz', 'baz': 'boo', })
         h.remove('foo', 'baz')
         self.assertTrue(not 'foo' in h)
         self.assertTrue('bar' in h)
         self.assertTrue(not 'baz' in h)
 
-    def test_restrict(self):
+    def test_get_values(self):
         h = Hash({'foo': 'bar', 'bar': 'baz', 'baz': 'boo', })
         self.assertEquals(h.get_values(('baz', 'foo', 'bar', )), ['boo', 'bar', 'baz', ])
 

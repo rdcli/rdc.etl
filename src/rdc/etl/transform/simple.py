@@ -56,7 +56,7 @@ class _SimpleItemTransformationDescriptor(object):
         """
 
         def _filter(v, h, k=k, filter=filter):
-            h.set(k, _apply_filter(v, h, filter) if filter is not None else v)
+            h[k] = _apply_filter(v, h, filter) if filter is not None else v
             return v
 
         return self.filter_multi(_filter)
@@ -117,12 +117,26 @@ class _SimpleItemTransformationDescriptor(object):
     def __call__(self, hash):
         if isinstance(self.getter, str):
             _name = self.getter
-            getter = lambda o: o.get(_name)
+
+            def getter(o):
+                try:
+                    return o[_name]
+                except KeyError, e:
+                    return None
+
             getter.func_name = 'get_' + str(_name)
+
         elif isinstance(self.getter, unicode):
             _name = self.getter.encode('utf-8')
-            getter = lambda o: o.get(_name)
+
+            def getter(o):
+                try:
+                    return o[_name]
+                except KeyError, e:
+                    return None
+
             getter.func_name = 'get_' + str(_name)
+
         else:
             getter = self.getter
             _name = repr(self.getter)
@@ -187,9 +201,9 @@ class SimpleTransform(Transform):
 
             if can_update:
                 if callable(value_getter):
-                    hash.set(name, value_getter(hash))
+                    hash[name] = value_getter(hash)
                 else:
-                    hash.set(name, value_getter)
+                    hash[name] = value_getter
 
         for filter in self._filters:
             hash = filter(hash)

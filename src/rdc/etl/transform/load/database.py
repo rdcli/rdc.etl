@@ -20,7 +20,6 @@ from werkzeug.utils import cached_property
 from rdc.etl.transform import Transform
 from rdc.etl.util import now
 
-
 class BaseDatabaseLoad(Transform):
     table_name = None
     fetch_columns = None
