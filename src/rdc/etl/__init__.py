@@ -22,8 +22,5 @@ except ImportError:
     import pkgutil
     __path__ = pkgutil.extend_path(__path__, __name__)
 
-# rdc.etl requires pobject
-import rdc.etl.contrib.pobjects.pobjects_builtins
-
 __version__ = '1.0.0a2'
 
