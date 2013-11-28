@@ -41,7 +41,6 @@ class Join(Transform):
         self.is_outer = is_outer or self.is_outer
         self.default_outer_join_data = default_outer_join_data or self.default_outer_join_data
 
-    @abstract
     def get_join_data_for(self, hash):
         """
         Abtract method that must be implemented in concrete subclasses, to return the data that should be joined with
@@ -62,7 +61,7 @@ class Join(Transform):
         Default join type is inner, to preserve backward compatibility.
 
         """
-        pass
+        raise NotImplementedError('Abstract.')
 
     def transform(self, hash, channel=STDIN):
         join_data = self.get_join_data_for(hash)

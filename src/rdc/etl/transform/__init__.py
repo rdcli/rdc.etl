@@ -17,9 +17,12 @@
 import types
 # todo make this python2.6 compatible
 from collections import OrderedDict
-from rdc.etl.hash import Hash
+from zope.interface import Interface
 from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, InactiveReadableError, Begin, End
 
+class ITransform(Interface):
+    def transform(self, hash, channel=STDIN):
+        """core transform method"""
 
 class Transform(object):
     INPUT_CHANNELS = (STDIN, )
@@ -56,10 +59,12 @@ class Transform(object):
         """If you need to execute code before any item is transformed, this is the place."""
         pass
 
-    @abstract
     def transform(self, hash, channel=STDIN):
-        """Core transformation method that will be called for each input data row."""
-        pass
+        """Core transformation method that will be called for each input data row.
+
+        Defined by ITransform
+        """
+        raise NotImplementedError('Abstract.')
 
     def finalize(self):
         """If you need to execute code after all items are transformed, this is the place. It's especially usefull for
@@ -81,7 +86,6 @@ class Transform(object):
 
     def get_stats_as_string(self):
         return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
-
 
     def __repr__(self):
         return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'

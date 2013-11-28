@@ -15,7 +15,8 @@
 # limitations under the License.
 
 import sys, os, platform
-from . import IStatus
+from zope.interface import implements
+from rdc.etl.status import IStatus
 
 
 def has_ansi_support(handle=None):
@@ -29,7 +30,10 @@ def has_ansi_support(handle=None):
     return False
 
 
-class ConsoleStatus(IStatus):
+class ConsoleStatus(object):
+
+    implements(IStatus)
+
     def __init__(self):
         self.ansi = has_ansi_support()
         self._lc = 0

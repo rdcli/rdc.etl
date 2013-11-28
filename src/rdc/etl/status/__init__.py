@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class IStatus(object):
-    @abstract
-    def update(self, harness):
-        pass
+from zope.interface import Interface
+
+
+class IStatus(Interface):
+    def update(harness):
+        """update this status"""

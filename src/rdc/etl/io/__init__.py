@@ -16,6 +16,7 @@
 
 from copy import copy
 import time
+from zope.interface import Interface, implements
 from rdc.etl.hash import Hash
 from Queue import Queue
 
@@ -41,15 +42,13 @@ Begin = Token('Begin')
 End = Token('End')
 BUFFER_SIZE = 8192
 
-class IReadable(object):
-    @abstract
-    def get(self, block=True, timeout=True):
-        pass
+class IReadable(Interface):
+    def get(block=True, timeout=True):
+        """Read."""
 
-class IWritable(object):
-    @abstract
-    def put(self, data, block=True, timeout=True):
-        pass
+class IWritable(Interface):
+    def put(data, block=True, timeout=True):
+        """Write."""
 
 class InactiveIOError(IOError):
     pass
@@ -63,7 +62,10 @@ class InactiveWritableError(InactiveIOError):
     pass
 
 
-class InputMultiplexer(IReadable):
+class InputMultiplexer(object):
+
+    implements(IReadable)
+
     def __init__(self, channels):
         self.queues = dict([(channel, Input()) for channel in channels])
         self._plugged = set()
@@ -109,7 +111,10 @@ class InputMultiplexer(IReadable):
         return [queue for channel, queue in self.queues.items() if channel not in self._plugged]
 
 
-class OutputDemultiplexer(IWritable):
+class OutputDemultiplexer(object):
+
+    implements(IWritable)
+
     def __init__(self, channels):
         self.channels = dict([(channel, []) for channel in channels])
 
@@ -148,7 +153,10 @@ class OutputDemultiplexer(IWritable):
         raise ValueError('Unintelligible message.')
 
 
-class Input(IReadable, IWritable, Queue):
+class Input(Queue):
+
+    implements(IReadable, IWritable)
+
     def __init__(self, maxsize=BUFFER_SIZE):
         Queue.__init__(self, maxsize)
         self._runlevel = 0

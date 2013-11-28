@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class IHarness(object):
+from zope.interface import Interface, implements
+
+class IHarness(Interface):
     """
     ETL harness interface.
 
@@ -22,39 +24,42 @@ class IHarness(object):
 
     """
 
-    @abstract
-    def __call__(self):
-        pass
+    def __call__():
+        """Actual harness run."""
+
+
+class AbstractHarness(object):
+    """
+    is 99.9% chances you want to extend this or a subclass of this.
+
+    """
+
+    implements(IHarness)
+
+    def __init__(self):
+        self.status = []
 
     def initialize(self):
+        pass
+
+    def validate(self):
         pass
 
     def finalize(self):
         pass
 
-class AbstractHarness(IHarness):
-    """
-    Abstract harness defines initialize/finalize/loop, which are pretty handy. If you implement a custom harness, there
-    is 99.9% chances you want to extend this or a subclass of this.
-
-    """
-    def __init__(self):
-        self.status = []
-
     def __call__(self):
+        """Implements IHarness.__call__()"""
         self.initialize()
         self.validate()
         _value = self.loop()
         self.finalize()
         return _value
 
-    @abstract
     def loop(self):
-        pass
+        raise NotImplementedError('Abstract.')
 
-    @abstract
     def update_status(self):
-        pass
+        raise NotImplementedError('Abstract.')
 
-    def validate(self):
-        pass
+
