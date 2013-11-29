@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from abc import ABCMeta, abstractmethod
 from copy import copy
 import time
 from rdc.etl.hash import Hash
@@ -41,15 +42,23 @@ Begin = Token('Begin')
 End = Token('End')
 BUFFER_SIZE = 8192
 
-class IReadable(object):
-    @abstract
-    def get(self, block=True, timeout=True):
-        pass
+class IReadable:
+    """Interface for things you can read from."""
 
-class IWritable(object):
-    @abstract
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def get(self, block=True, timeout=True):
+        """Read. Block/timeout are there for Queue compat."""
+
+class IWritable:
+    """Interface for things you can write to."""
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def put(self, data, block=True, timeout=True):
-        pass
+        """Write. Block/timeout are there for Queue compat."""
 
 class InactiveIOError(IOError):
     pass
@@ -74,10 +83,11 @@ class InputMultiplexer(IReadable):
         # todo documentation says .enpty() value is not reliable ... XXX
         while self.alive:
             for id, queue in self.queues.items():
-                if not queue.empty():
+                if queue.alive and not queue.empty():
                     # xxx useage of block/timeout here is wrong
                     data = queue.get(block, timeout)
                     return data, id
+
             # todo xxx take block and timeout into account
             time.sleep(0.2)
 
@@ -86,6 +96,11 @@ class InputMultiplexer(IReadable):
     def plug(self, dmux, channel=DEFAULT_INPUT_CHANNEL, dmux_channel=DEFAULT_OUTPUT_CHANNEL):
         dmux.plug_into(self.queues[channel], channel=dmux_channel)
         self._plugged.add(channel)
+
+    def __getitem__(self, item):
+        if not item in self.queues:
+            raise KeyError('No such input channel %r.' % (item, ))
+        return self.queues[item]
 
     @property
     def alive(self):
@@ -111,7 +126,7 @@ class OutputDemultiplexer(IWritable):
         data, channel = self.__demux(data)
 
         if not channel in self.channels:
-            raise IOError('Unknown channel')
+            raise IOError('Unknown channel %r.' % (channel, ))
 
         for target in self.channels[channel]:
             target.put(isinstance(data, Token) and data or copy(data), block, timeout)
@@ -127,6 +142,11 @@ class OutputDemultiplexer(IWritable):
             raise ValueError('Channel already have this target plugged for channel %r.' % (channel, ))
         self.channels[channel].append(target)
 
+    def __getitem__(self, item):
+        if not item in self.channels:
+            raise KeyError('No such output channel %r.' % (item, ))
+        return self.channels[item]
+
     def __demux(self, data):
         if isinstance(data, Hash):
             return data, DEFAULT_OUTPUT_CHANNEL
@@ -137,7 +157,8 @@ class OutputDemultiplexer(IWritable):
         raise ValueError('Unintelligible message.')
 
 
-class Input(IReadable, IWritable, Queue):
+class Input(Queue, IReadable, IWritable):
+
     def __init__(self, maxsize=BUFFER_SIZE):
         Queue.__init__(self, maxsize)
         self._runlevel = 0
@@ -172,6 +193,16 @@ class Input(IReadable, IWritable, Queue):
             return self.get(block, timeout)
 
         return data
+
+
+    def empty(self):
+        self.mutex.acquire()
+        while self._qsize() and self.queue[0] == End:
+            self._runlevel -= 1
+            Queue._get(self)
+        self.mutex.release()
+
+        return Queue.empty(self)
 
     @property
     def alive(self):

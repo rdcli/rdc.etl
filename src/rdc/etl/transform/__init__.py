@@ -15,13 +15,20 @@
 # limitations under the License.
 
 import types
+from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
-from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, InactiveReadableError, Begin, End
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
 
+class ITransform:
 
-class Transform(object):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def transform(self, hash, channel=STDIN):
+        """core transform method"""
+
+class Transform(ITransform):
     INPUT_CHANNELS = (STDIN, )
     OUTPUT_CHANNELS = (STDOUT, STDERR, )
 
@@ -56,10 +63,12 @@ class Transform(object):
         """If you need to execute code before any item is transformed, this is the place."""
         pass
 
-    @abstract
     def transform(self, hash, channel=STDIN):
-        """Core transformation method that will be called for each input data row."""
-        pass
+        """Core transformation method that will be called for each input data row.
+
+        Defined by ITransform
+        """
+        raise NotImplementedError('Abstract.')
 
     def finalize(self):
         """If you need to execute code after all items are transformed, this is the place. It's especially usefull for
@@ -81,7 +90,6 @@ class Transform(object):
 
     def get_stats_as_string(self):
         return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
-
 
     def __repr__(self):
         return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'

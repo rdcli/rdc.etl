@@ -17,8 +17,24 @@
 from rdc.etl.io import STDIN
 from rdc.etl.transform.extract import Extract
 
-
 class DatabaseExtract(Extract):
+    """
+    Extract data from a database using some raw SQL and yield one output line per query result.
+
+    .. attribute:: engine
+
+        The sqlalchemy engine to use for extraction.
+
+    .. attribute:: query
+
+        The database query that will be used to extract data from database. Should not contain OFFSET/LIMIT, nor ";".
+
+    .. attribute:: pack_size
+
+        The number of records to retrieve at a time (will be used to add OFFSET/LIMIT clauses to SQL).
+
+    """
+
     query = 'SELECT 1'
     pack_size = 1000
 

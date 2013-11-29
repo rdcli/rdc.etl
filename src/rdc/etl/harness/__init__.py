@@ -14,7 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class IHarness(object):
+from abc import ABCMeta, abstractmethod
+
+class IHarness:
     """
     ETL harness interface.
 
@@ -22,39 +24,45 @@ class IHarness(object):
 
     """
 
-    @abstract
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __call__(self):
-        pass
+        """Actual harness run."""
 
-    def initialize(self):
-        pass
+    @abstractmethod
+    def add(self, transform): pass
 
-    def finalize(self):
-        pass
+    @abstractmethod
+    def loop(self): pass
+
 
 class AbstractHarness(IHarness):
     """
-    Abstract harness defines initialize/finalize/loop, which are pretty handy. If you implement a custom harness, there
     is 99.9% chances you want to extend this or a subclass of this.
 
     """
+
+    __metaclass__ = ABCMeta
+
     def __init__(self):
         self.status = []
 
+    def initialize(self): pass
+
+    def validate(self): pass
+
+    def finalize(self): pass
+
     def __call__(self):
+        """Implements IHarness.__call__()"""
         self.initialize()
         self.validate()
         _value = self.loop()
         self.finalize()
         return _value
 
-    @abstract
-    def loop(self):
-        pass
+    @abstractmethod
+    def update_status(self): pass
 
-    @abstract
-    def update_status(self):
-        pass
 
-    def validate(self):
-        pass

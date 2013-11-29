@@ -14,3 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import unittest
+from rdc.etl.hash import Hash
+from rdc.etl.transform.simple import SimpleTransform
+
+
+class SimpleTransformCase(unittest.TestCase):
+    def _create_transform(self):
+        t = SimpleTransform()
+        return t
+
+    def test_remove(self):
+        t = self._create_transform()
+        t.remove('foo', 'boo')
+        r = t.transform(Hash({'foo': 'bar', 'bar': 'baz', 'boo': 'hiya'}))
+        self.assertIn('bar', r)
+        self.assertNotIn('foo', r)
+        self.assertNotIn('boo', r)
+
+if __name__ == '__main__':
+    unittest.main()

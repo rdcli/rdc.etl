@@ -16,7 +16,7 @@
 
 import unittest
 from Queue import Empty
-from rdc.etl.io import Input, InactiveWritableError, Begin, End, InactiveReadableError
+from rdc.etl.io import Input, InactiveWritableError, Begin, End, InactiveReadableError, InputMultiplexer
 
 
 class InputTestCase(unittest.TestCase):
@@ -59,6 +59,38 @@ class InputTestCase(unittest.TestCase):
         # still can get remaining data
         self.assertEqual(q.get(), 'baz')
         self.assertRaises(InactiveReadableError, q.get)
+
+CH1 = 'ch1'
+CH2 = 'ch2'
+
+class InputMultiplexerTestCase(unittest.TestCase):
+    def test_multiple_input(self):
+        imux = InputMultiplexer([CH1, CH2])
+
+        # inactive on mux creation
+        self.assertRaises(InactiveWritableError, imux[CH1].put, 'foo')
+        self.assertRaises(InactiveWritableError, imux[CH2].put, 'foo')
+
+        # activate
+        imux[CH1].put(Begin)
+        imux[CH1].put('foo')
+        imux[CH1].put('foo-oo')
+
+        # simple get.
+        self.assertEqual(imux.get(), ('foo', CH1, ))
+
+        imux[CH1].put(End)
+
+        imux[CH2].put(Begin)
+        imux[CH2].put('bar')
+        imux[CH2].put('ba-ar')
+        imux[CH2].put(End)
+
+        self.assertEqual(imux.get(), ('foo-oo', CH1, ))
+        self.assertEqual(imux.get(), ('bar', CH2, ))
+        self.assertEqual(imux.get(), ('ba-ar', CH2, ))
+        self.assertRaises(InactiveReadableError, imux.get)
+
 
 
 if __name__ == '__main__':

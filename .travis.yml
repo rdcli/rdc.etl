@@ -1,8 +1,10 @@
 language: python
 python:
   - "2.7"
+  - pypy
 install:
   - "pip install ."
 script:
   - python example/shapes.py
+  - python example/flow.py
   - nosetests

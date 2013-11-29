@@ -56,7 +56,7 @@ class _SimpleItemTransformationDescriptor(object):
         """
 
         def _filter(v, h, k=k, filter=filter):
-            h.set(k, _apply_filter(v, h, filter) if filter is not None else v)
+            h[k] = _apply_filter(v, h, filter) if filter is not None else v
             return v
 
         return self.filter_multi(_filter)
@@ -69,7 +69,14 @@ class _SimpleItemTransformationDescriptor(object):
         """
         TODO document this and add a generic if_
         """
-        self.conditions.insert(0, lambda hash, name: hash.get(field or name, None) is None)
+
+        def tester(o):
+            try:
+                io[_name]
+            except KeyError, e:
+                return None
+
+        self.conditions.insert(0, lambda hash, name: not (field or name) in hash)
         return self
 
     def prepend(self, *fields, **options):
@@ -117,12 +124,26 @@ class _SimpleItemTransformationDescriptor(object):
     def __call__(self, hash):
         if isinstance(self.getter, str):
             _name = self.getter
-            getter = lambda o: o.get(_name)
+
+            def getter(o):
+                try:
+                    return o[_name]
+                except KeyError, e:
+                    return None
+
             getter.func_name = 'get_' + str(_name)
+
         elif isinstance(self.getter, unicode):
             _name = self.getter.encode('utf-8')
-            getter = lambda o: o.get(_name)
+
+            def getter(o):
+                try:
+                    return o[_name]
+                except KeyError, e:
+                    return None
+
             getter.func_name = 'get_' + str(_name)
+
         else:
             getter = self.getter
             _name = repr(self.getter)
@@ -143,27 +164,22 @@ class SimpleTransform(Transform):
 
     Example:
 
-        >>> t = SimpleTransform()
-
-        # Apply "upper" method on "name" field, and store it back in "name" field.
-        >>> t.add('name').filter('upper')
-
-        # Apply the lambda to "description" field content, and store it into the "full_description" field.
-        >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
-
-        # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
-        # hashes, it is only usefull to override some parent stuff.
-        >>> t.delete('useless')
-
-        # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
-        >>> t.remove('notanymore')
-
-        # Add a field (output hashes will contain this field, all with the same "foo bar" value).
-        >>> t.test_field = 'foo bar'
+    >>> t = SimpleTransform()
+    >>> # Apply "upper" method on "name" field, and store it back in "name" field.
+    >>> t.add('name').filter('upper')
+    >>> # Apply the lambda to "description" field content, and store it into the "full_description" field.
+    >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
+    >>> # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
+    >>> # hashes, it is only usefull to override some parent stuff.
+    >>> t.delete('useless')
+    >>> # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
+    >>> t.remove('notanymore')
+    >>> # Add a field (output hashes will contain this field, all with the same "foo bar" value).
+    >>> t.test_field = 'foo bar'
 
     """
-    DescriptorClass = _SimpleItemTransformationDescriptor
 
+    DescriptorClass = _SimpleItemTransformationDescriptor
 
     def __init__(self, *filters):
         super(SimpleTransform, self).__init__()
@@ -187,9 +203,9 @@ class SimpleTransform(Transform):
 
             if can_update:
                 if callable(value_getter):
-                    hash.set(name, value_getter(hash))
+                    hash[name] = value_getter(hash)
                 else:
-                    hash.set(name, value_getter)
+                    hash[name] = value_getter
 
         for filter in self._filters:
             hash = filter(hash)
@@ -213,8 +229,7 @@ class SimpleTransform(Transform):
         """
         Removes a field in hash, using a post transform filter.
         """
-        for name in names:
-            self.filter(lambda t: t.remove(name))
+        self.filter(lambda t, names=names: t.remove(*names))
 
     def filter(self, filter):
         """

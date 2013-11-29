@@ -21,8 +21,18 @@ from rdc.etl.util import create_http_reader, create_file_reader
 
 
 class FileExtract(Transform):
-    """Deprecated in favor of FileJoin (XXX note to myself: why ?)"""
+    """
+    Extract data from a file into a field.
 
+    .. attribute:: uri
+
+        The path for source file. Can be either an absolute/relative filesystem path or an HTTP/HTTPS resource.
+
+    .. attribute:: output_field
+
+        The field that will contain file content. Use the topic (`_`) field by default.
+
+    """
     uri = None
     output_field = '_'
 

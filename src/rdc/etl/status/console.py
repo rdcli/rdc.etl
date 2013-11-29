@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import sys, os, platform
-from . import IStatus
+from rdc.etl.status import IStatus
 
 
 def has_ansi_support(handle=None):
@@ -27,7 +27,6 @@ def has_ansi_support(handle=None):
         else:
             return True
     return False
-
 
 class ConsoleStatus(IStatus):
     def __init__(self):
@@ -46,3 +45,4 @@ class ConsoleStatus(IStatus):
                 print "\033[K   ", id, transform
             print "\033[K", "-" * 80
             self._lc = len(transforms) + 2
+
