@@ -72,7 +72,6 @@ setup(name='rdc.etl',
         # actually use, make it so nothing is required, but still travis
         # install the needed ones and an exception is raised when one tries to
         # use a component with a dependency without having it installed first.
-        'zope.interface',
         'BeautifulSoup',
         'requests',
         'unidecode',

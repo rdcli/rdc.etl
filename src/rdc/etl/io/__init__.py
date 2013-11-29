@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from abc import ABCMeta, abstractmethod
 from copy import copy
 import time
-from zope.interface import Interface, implements
 from rdc.etl.hash import Hash
 from Queue import Queue
 
@@ -42,13 +42,23 @@ Begin = Token('Begin')
 End = Token('End')
 BUFFER_SIZE = 8192
 
-class IReadable(Interface):
-    def get(block=True, timeout=True):
-        """Read."""
+class IReadable:
+    """Interface for things you can read from."""
 
-class IWritable(Interface):
-    def put(data, block=True, timeout=True):
-        """Write."""
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def get(self, block=True, timeout=True):
+        """Read. Block/timeout are there for Queue compat."""
+
+class IWritable:
+    """Interface for things you can write to."""
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def put(self, data, block=True, timeout=True):
+        """Write. Block/timeout are there for Queue compat."""
 
 class InactiveIOError(IOError):
     pass
@@ -62,10 +72,7 @@ class InactiveWritableError(InactiveIOError):
     pass
 
 
-class InputMultiplexer(object):
-
-    implements(IReadable)
-
+class InputMultiplexer(IReadable):
     def __init__(self, channels):
         self.queues = dict([(channel, Input()) for channel in channels])
         self._plugged = set()
@@ -111,10 +118,7 @@ class InputMultiplexer(object):
         return [queue for channel, queue in self.queues.items() if channel not in self._plugged]
 
 
-class OutputDemultiplexer(object):
-
-    implements(IWritable)
-
+class OutputDemultiplexer(IWritable):
     def __init__(self, channels):
         self.channels = dict([(channel, []) for channel in channels])
 
@@ -153,9 +157,7 @@ class OutputDemultiplexer(object):
         raise ValueError('Unintelligible message.')
 
 
-class Input(Queue):
-
-    implements(IReadable, IWritable)
+class Input(Queue, IReadable, IWritable):
 
     def __init__(self, maxsize=BUFFER_SIZE):
         Queue.__init__(self, maxsize)

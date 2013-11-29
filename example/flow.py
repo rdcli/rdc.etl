@@ -45,3 +45,4 @@ sj = SortedJoin(key=('id', ))
 h.add_chain(p1, Sort(key=('id',)), sj, Log())
 h.add_chain(p2, Sort(key=('id',)), output=(sj, STDIN2, ))
 run(h)
+

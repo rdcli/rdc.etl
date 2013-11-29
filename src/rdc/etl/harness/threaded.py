@@ -85,6 +85,17 @@ class ThreadedHarness(AbstractHarness):
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
 
+    def get_threads(self):
+        for id, thread in self._threads.items():
+            yield id, thread
+
+    def add(self, transform):
+        """Register a transformation, create a thread object to manage its future lifecycle."""
+        id = self._current_id.next()
+        self._transforms[id] = transform
+        self._threads[id] = TransformThread(transform)
+        return transform # BC, maybe id would be a better thing to return (todo 2.0, or even 1.0 before api freeze)
+
     def validate(self):
         """Validation of transform graph validity."""
         for id, transform in self._transforms.items():
@@ -130,15 +141,18 @@ class ThreadedHarness(AbstractHarness):
         for status in self.status:
             status.update(self._threads.values())
 
-    # Methods below does not belong to API.
-    def add(self, transform):
-        """Register a transformation, create a thread object to manage its future lifecycle."""
-        id = self._current_id.next()
-        self._transforms[id] = transform
-        self._threads[id] = TransformThread(transform)
-        return transform # BC, maybe id would be a better thing to return (todo 2.0, or even 1.0 before api freeze)
 
     def add_chain(self, *transforms, **kwargs):
+        """Main helper method to add chains of transforms to this harness. You can plug the whole chain from and to
+        other transforms by specifying `input` and `output` parameters.
+
+        The transforms provided should not be bound yet.
+
+        >>> h = Harness()
+        >>> t1, t2, t3 = Transform(), Transform(), Transform()
+        >>> h.add_chain(t1, t2, t3)
+
+        """
         if not len(transforms):
             raise Exception('At least one transform should be provided to form a chain.')
 

@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from zope.interface import Interface
+from abc import ABCMeta, abstractmethod
 
+class IStatus:
 
-class IStatus(Interface):
-    def update(harness):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def update(self, harness):
         """update this status"""

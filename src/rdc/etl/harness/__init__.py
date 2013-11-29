@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from zope.interface import Interface, implements
+from abc import ABCMeta, abstractmethod
 
-class IHarness(Interface):
+class IHarness:
     """
     ETL harness interface.
 
@@ -24,29 +24,35 @@ class IHarness(Interface):
 
     """
 
-    def __call__():
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __call__(self):
         """Actual harness run."""
 
+    @abstractmethod
+    def add(self, transform): pass
 
-class AbstractHarness(object):
+    @abstractmethod
+    def loop(self): pass
+
+
+class AbstractHarness(IHarness):
     """
     is 99.9% chances you want to extend this or a subclass of this.
 
     """
 
-    implements(IHarness)
+    __metaclass__ = ABCMeta
 
     def __init__(self):
         self.status = []
 
-    def initialize(self):
-        pass
+    def initialize(self): pass
 
-    def validate(self):
-        pass
+    def validate(self): pass
 
-    def finalize(self):
-        pass
+    def finalize(self): pass
 
     def __call__(self):
         """Implements IHarness.__call__()"""
@@ -56,10 +62,7 @@ class AbstractHarness(object):
         self.finalize()
         return _value
 
-    def loop(self):
-        raise NotImplementedError('Abstract.')
-
-    def update_status(self):
-        raise NotImplementedError('Abstract.')
+    @abstractmethod
+    def update_status(self): pass
 
 

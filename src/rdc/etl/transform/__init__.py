@@ -15,16 +15,20 @@
 # limitations under the License.
 
 import types
+from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
-from zope.interface import Interface
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, InactiveReadableError, Begin, End
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
 
-class ITransform(Interface):
+class ITransform:
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def transform(self, hash, channel=STDIN):
         """core transform method"""
 
-class Transform(object):
+class Transform(ITransform):
     INPUT_CHANNELS = (STDIN, )
     OUTPUT_CHANNELS = (STDOUT, STDERR, )
 

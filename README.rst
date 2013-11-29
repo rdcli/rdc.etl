@@ -5,8 +5,4 @@ rdc-etl
   :target: http://travis-ci.org/rdconseil/etl
   :alt: Build Status
 
-Install
-:::::::
-
-TODO
-
+`Read the doc <http://rdcetl.rtfd.org/>`_.

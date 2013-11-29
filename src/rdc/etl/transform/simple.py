@@ -69,7 +69,14 @@ class _SimpleItemTransformationDescriptor(object):
         """
         TODO document this and add a generic if_
         """
-        self.conditions.insert(0, lambda hash, name: hash.get(field or name, None) is None)
+
+        def tester(o):
+            try:
+                io[_name]
+            except KeyError, e:
+                return None
+
+        self.conditions.insert(0, lambda hash, name: not (field or name) in hash)
         return self
 
     def prepend(self, *fields, **options):
@@ -157,27 +164,22 @@ class SimpleTransform(Transform):
 
     Example:
 
-        >>> t = SimpleTransform()
-
-        # Apply "upper" method on "name" field, and store it back in "name" field.
-        >>> t.add('name').filter('upper')
-
-        # Apply the lambda to "description" field content, and store it into the "full_description" field.
-        >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
-
-        # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
-        # hashes, it is only usefull to override some parent stuff.
-        >>> t.delete('useless')
-
-        # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
-        >>> t.remove('notanymore')
-
-        # Add a field (output hashes will contain this field, all with the same "foo bar" value).
-        >>> t.test_field = 'foo bar'
+    >>> t = SimpleTransform()
+    >>> # Apply "upper" method on "name" field, and store it back in "name" field.
+    >>> t.add('name').filter('upper')
+    >>> # Apply the lambda to "description" field content, and store it into the "full_description" field.
+    >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
+    >>> # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
+    >>> # hashes, it is only usefull to override some parent stuff.
+    >>> t.delete('useless')
+    >>> # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
+    >>> t.remove('notanymore')
+    >>> # Add a field (output hashes will contain this field, all with the same "foo bar" value).
+    >>> t.test_field = 'foo bar'
 
     """
-    DescriptorClass = _SimpleItemTransformationDescriptor
 
+    DescriptorClass = _SimpleItemTransformationDescriptor
 
     def __init__(self, *filters):
         super(SimpleTransform, self).__init__()

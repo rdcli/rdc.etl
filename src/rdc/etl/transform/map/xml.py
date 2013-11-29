@@ -24,6 +24,21 @@ from watopy.util.html import unescape
 # XXX dependency on watopy, needs removal
 
 class XmlMap(Transform):
+    """
+    Reads a XML and yield values for each root children.
+
+    .. todo:: think how we want to make this flexible, xpath, etc ...
+
+    .. attribute:: field
+
+        The input field.
+
+    .. attribute:: xpath
+
+        Not used yet (TODO)
+
+    """
+
     field = None
     xpath = None
 

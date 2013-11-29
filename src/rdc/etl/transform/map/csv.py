@@ -27,6 +27,31 @@ except:
 
 
 class CsvMap(Transform):
+    """
+    Reads a CSV and yield the values, line-by-line.
+
+    .. attribute:: field
+
+        The input field.
+
+    .. attribute:: delimiter
+
+        The CSV delimiter.
+
+    .. attribute:: quotechar
+
+        The CSV quote character.
+
+    .. attribute:: headers
+
+        The list of column names, if the CSV does not contain it as its first line.
+
+    .. attribute:: skip
+
+        The amount of lines to skip before it actually yield output.
+
+    """
+
     field = '_'
     delimiter = ';'
     quotechar = '"'

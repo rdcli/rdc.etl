@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import sys, os, platform
-from zope.interface import implements
 from rdc.etl.status import IStatus
 
 
@@ -29,11 +28,7 @@ def has_ansi_support(handle=None):
             return True
     return False
 
-
-class ConsoleStatus(object):
-
-    implements(IStatus)
-
+class ConsoleStatus(IStatus):
     def __init__(self):
         self.ansi = has_ansi_support()
         self._lc = 0
@@ -50,3 +45,4 @@ class ConsoleStatus(object):
                 print "\033[K   ", id, transform
             print "\033[K", "-" * 80
             self._lc = len(transforms) + 2
+
