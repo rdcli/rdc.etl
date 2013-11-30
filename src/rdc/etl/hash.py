@@ -39,11 +39,12 @@ class Hash(OrderedDict):
         """
         todo: simplify this as it does two things
         """
-        for k, v in self.iteritems():
+        keys = self.keys()
+        for k in keys:
             if tester and not tester(k):
                 del self[k]
             elif renamer:
-                self[renamer(k)] = v
+                self[renamer(k)] = self[k]
                 del self[k]
 
         return self

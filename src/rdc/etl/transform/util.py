@@ -105,7 +105,10 @@ class Override(Transform):
         yield hash.update(self.override_data)
 
 def clean(hash):
-    return hash.restrict(lambda k: not k.startswith('_'))
+    for k in hash:
+        if k.startswith('_'):
+            del hash[k]
+    return hash
 
 class Clean(Transform):
     """
