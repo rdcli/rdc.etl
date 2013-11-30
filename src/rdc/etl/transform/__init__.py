@@ -43,14 +43,17 @@ class Transform(ITransform):
 
         List of output channel names
 
-    Usage example::
+    Example::
 
-        >>> def my_transform(hash, channel=STDIN):
+        >>> from rdc.etl.transform import Transform
+
+        >>> @Transform
+        ... def my_transform(hash, channel=STDIN):
         ...     yield hash.copy({'foo': hash['foo'].upper()})
-        >>> my_transform = Transform(my_transform)
+
         >>> print list(my_transform(
-        ...         Hash({'foo': 'bar', 'bar': 'alpha'}),
-        ...         Hash({'foo': 'baz', 'bar': 'omega'}),
+        ...         {'foo': 'bar', 'bar': 'alpha'},
+        ...         {'foo': 'baz', 'bar': 'omega'},
         ...     ))
         [<Hash {'bar': 'alpha', 'foo': 'BAR'}>, <Hash {'bar': 'omega', 'foo': 'BAZ'}>]
 
