@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from rdc.etl.io import STDIN
 
 from rdc.etl.transform.join import Join
 
@@ -32,7 +33,7 @@ class DatabaseJoin(Join):
         self.query = query or self.query
         self.dataset_keys_for_values = dataset_keys_for_values or self.dataset_keys_for_values
 
-    def get_join_data_for(self, hash):
+    def join(self, hash, channel=STDIN):
         values = [hash.get(key) for key in self.dataset_keys_for_values]
         return self.engine.execute(self.query, values)
 

@@ -76,17 +76,7 @@ class Join(Transform):
         Default join type is inner, to preserve backward compatibility.
 
         """
-        raise NotImplementedError('Abstract.')
-
-    # BC
-    @property
-    def get_join_data_for(self):
-        return self.join
-
-    # BC
-    @get_join_data_for.setter
-    def get_join_data_for(self, value):
-        self.join = value
+        raise NotImplementedError('Abstract method "join" was not defined for %r.' % (self.__class__, ))
 
     def transform(self, hash, channel=STDIN):
         join_data = self.join(hash, channel)
