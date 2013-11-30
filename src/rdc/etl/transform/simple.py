@@ -69,15 +69,16 @@ class _SimpleItemTransformationDescriptor(object):
     def if_none(self, field=None):
         """
         TODO document this and add a generic if_
+
+        Mark a field transformation to apply only the current value of a field is none. If no field is provided, then
+        it looks at the target field.
         """
 
-        def tester(o):
-            try:
-                io[_name]
-            except KeyError, e:
-                return None
+        def condition(hash, name, field=field):
+            field = field or name
+            return (not field in hash) or (hash[field] is None)
 
-        self.conditions.insert(0, lambda hash, name: not (field or name) in hash)
+        self.conditions.insert(0, condition)
         return self
 
     def prepend(self, *fields, **options):
