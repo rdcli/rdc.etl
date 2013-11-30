@@ -7,8 +7,8 @@ remote_doc:
 	curl -X POST http://readthedocs.org/build/rdcetl
 
 clean:
-	-find . -name \*.pyc | xargs rm -f
-	(cd doc; make clean)
+	find . -name \*.pyc | xargs rm -f
+	(cd doc; rm -rf _build/*)
 
 test:
 	nosetests --with-doctest --with-coverage
