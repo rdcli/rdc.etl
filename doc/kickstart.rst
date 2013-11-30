@@ -3,18 +3,6 @@ Kickstart
 
 A fast 4 step overview to get you kickstarted into rdc.etl.
 
-Create a Harness
-::::::::::::::::
-
-* Connect transformations
-* Runnable
-* Manage threading
-
-.. code-block:: python
-
-    from rdc.etl.harness.threaded import ThreadedHarness as Harness
-    harness = Harness()
-
 
 Create transformations
 ::::::::::::::::::::::
@@ -28,6 +16,7 @@ would usually use databases, webservices, files ...
 .. code-block:: python
 
     from rdc.etl.transform.extract import Extract
+
     @Extract
     def my_extract():
         yield {'foo': 'bar', 'bar': 'min'}
@@ -44,6 +33,7 @@ Distort it ...
 .. code-block:: python
 
     from rdc.etl.transform import Transform
+
     @Transform
     def my_transform(hash, channel):
         yield hash.update({
@@ -61,6 +51,7 @@ We'll use the screen as our load target ...
 .. code-block:: python
 
     from rdc.etl.transform.util import Log
+
     my_load = Log()
 
 
@@ -73,11 +64,24 @@ We'll use the screen as our load target ...
     default input channel), but we'll use it as such for demonstration purpose.
 
 
+Build your harness
+::::::::::::::::::
+
+* Connect transformations
+* Runnable
+* Manage threading
+
+.. code-block:: python
+
+    from rdc.etl.harness.threaded import ThreadedHarness as Harness
+
+    harness = Harness()
+
+
 Tie transformations together
 ::::::::::::::::::::::::::::
 
-The ``Harness`` we created at the beginning of this tutorial has a ``add_chain()`` method that can be used to easily
-plug a list of ordered transformations together.
+The ``Harness`` has a ``add_chain()`` method that can be used to easily plug a list of ordered transformations together.
 
 .. code-block:: python
 
