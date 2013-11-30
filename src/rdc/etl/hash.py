@@ -39,7 +39,7 @@ class Hash(OrderedDict):
         """
         todo: simplify this as it does two things
         """
-        for k, v in self.items():
+        for k, v in self.iteritems():
             if tester and not tester(k):
                 del self[k]
             elif renamer:

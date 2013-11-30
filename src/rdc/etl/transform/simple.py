@@ -210,7 +210,6 @@ class SimpleTransform(Transform):
         for name, value_getter in self.__dict__.items():
             if name[0] == '_' or name in ('INPUT_CHANNELS', 'OUTPUT_CHANNELS', 'transform' ):
                 continue
-            print name, value_getter
 
             try:
                 conditions = list(value_getter.conditions)
