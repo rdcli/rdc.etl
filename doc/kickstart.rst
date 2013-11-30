@@ -12,65 +12,70 @@ Create a Harness
 
 >>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
 >>> harness = Harness()
->>> # ... add your transforms here (see below)
->>> harness() # run!
 
 
 Create transformations
 ::::::::::::::::::::::
 
-* Various types, some transformations takes input and yield output, while some
-  are input-only ("load") or output-only ("extract").
+Extract some data ...
+---------------------
 
->>> from rdc.etl.transform.extract import Extract
->>> extract = Extract(stream_data=({'foo': 'bar'}, {'foo': 'baz'}))
+``Extract`` is a flexible base class to write extract transformations. We use a generator here, real life
+would usually use databases, webservices, files ...
 
-`Extract` is a base class to write extract transformations, and we'll produce
-rows from a tuple of dictionaries here. Real life would usually use databases,
-webservices, files ...
+    >>> from rdc.etl.transform.extract import Extract
+    >>> @Extract
+    >>> def my_extract():
+    ...     yield {'foo': 'bar'}
+    ...     yield {'bar': 'baz'}
 
->>> from rdc.etl.transform.simple import SimpleTransform
->>> transform = SimpleTransform()
->>> transform.add('foo').filter('upper')
 
-`SimpleTransform` is a transformation builder helper, that has a lot of
-shortcut to build data transformations based on callbacks, filters and simple
-tests.
+:doc:`For more informations, see the extracts reference <transform/reference/extract>`.
+
+Distort it ...
+--------------
+
+``Transform``is a flexible base class for all kind of transformations.
+
+>>> from rdc.etl.transform import Transform
+>>> @Transform
+>>> def my_transform(hash, channel):
+...     yield hash.update({
+...         'foo': hash['foo'].upper()
+...     })
+
+:doc:`For more informations, see the transformations reference <transform/index>`.
+
+Load it ...
+-----------
+
+We'll use the screen as our load target ...
 
 >>> from rdc.etl.transform.util import Log
->>> load = Log()
+>>> my_load = Log()
 
-`Log` is not a "load" transformation stricto sensu (as it acts as an identity
-transformation, sending to the default output channel whatever comes in its
-default input channel), but we'll use it as such for demonstration purpose.
+:doc:`For more informations, see the loads reference <transform/reference/load>`.
+
+.. note::
+
+    `Log` is not a "load" transformation stricto sensu (as it acts as an identity
+    transformation, sending to the default output channel whatever comes in its
+    default input channel), but we'll use it as such for demonstration purpose.
 
 
 Tie transformations together
 ::::::::::::::::::::::::::::
 
-The default harness has a `add_chain` shortcut that allows to easily create and
-connect together a linear chain of transformations (by linear, we mean that
-every transform default output channel is connected to the next transformation
-default input channel). This is a very common case, and should be enough to
-play around a bit.
+The ``Harness`` we created at the beginning of this tutorial has a ``add_chain()`` method that can be used to easily
+plug a list of ordered transformations together.
 
->>> harness.add_chain(extract, transform, load)
-
-This code, without using the shortcut, would need to be written as follow.
-
->>> harness.add(extract)
->>> harness.add(transform)
->>> harness.add(load)
->>> transform._input.plug(extract._output)
->>> load._input.plug(transform._output)
-
-This API is a work in progress.
+>>> harness.add_chain(my_extract, my_transform, my_load)
 
 
 Run the job
 :::::::::::
 
-Once your job has been configured in your harness instance, you can run it.
+Our job is ready, you can run it::
 
 >>> harness()
 
