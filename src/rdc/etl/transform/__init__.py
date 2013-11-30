@@ -42,6 +42,8 @@ class Transform(ITransform):
         self._initialized = False
         self._finalized = False
 
+        self._name = self.__class__.__name__
+
     def step(self, finalize=False):
         if not self._initialized:
             self._initialized = True
@@ -77,10 +79,19 @@ class Transform(ITransform):
 
     @property
     def virgin(self):
+        """Whether or not this transformation already contains a yucca (spéciale dédicace)."""
         return not self._initialized and not self._finalized
 
-    def get_name(self):
-        return  self.__class__.__name__
+    # Name, statistics and representation logic. This is basic but important, as it will serve visualisation/debugging
+    # purpose.
+
+    @property
+    def __name__(self):
+        return self._name
+
+    @__name__.setter
+    def __name__(self, value):
+        self._name = value
 
     def get_stats(self):
         return OrderedDict((
@@ -92,12 +103,13 @@ class Transform(ITransform):
         return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
 
     def __repr__(self):
-        return '<' + self.get_name() + ' ' + self.get_stats_as_string() + '>'
+        return '<' + self.__name__ + ' ' + self.get_stats_as_string() + '>'
+
+    # Private
 
     def __execute_and_handle_output(self, callable, *args, **kwargs):
         """Runs a transformation callable with given args/kwargs and flush the result into the right
-        output channel.
-        """
+        output channel."""
         results = callable(*args, **kwargs)
         # Put data onto output channels
         if isinstance(results, types.GeneratorType):

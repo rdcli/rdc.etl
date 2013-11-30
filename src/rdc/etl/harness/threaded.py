@@ -51,7 +51,7 @@ class TransformThread(Thread):
 
     @property
     def name(self):
-        return self.transform.get_name() + '-' + str(self.__thread_number)
+        return self.transform.__name__ + '-' + str(self.__thread_number)
 
     def run(self):
         while True:
