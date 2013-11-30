@@ -104,6 +104,8 @@ class Override(Transform):
     def transform(self, hash, channel=STDIN):
         yield hash.update(self.override_data)
 
+def clean(hash):
+    return hash.restrict(lambda k: not k.startswith('_'))
 
 class Clean(Transform):
     """
@@ -111,5 +113,5 @@ class Clean(Transform):
     """
 
     def transform(self, hash, channel=STDIN):
-        yield hash.restrict(lambda k: not k.startswith('_'))
+        yield clean(hash)
 

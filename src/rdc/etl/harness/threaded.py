@@ -148,7 +148,7 @@ class ThreadedHarness(AbstractHarness):
 
         The transforms provided should not be bound yet.
 
-        >>> h = Harness()
+        >>> h = ThreadedHarness()
         >>> t1, t2, t3 = Transform(), Transform(), Transform()
         >>> h.add_chain(t1, t2, t3)
 

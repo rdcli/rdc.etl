@@ -1,9 +1,35 @@
-Input / Output
-==============
+Input / output design
+=====================
 
 .. module:: rdc.etl.io
 
+Basics
+::::::
+
+All you have to know as an ETL user, is that each transform may have 0..n input channels and 0..n output channels. Mostly
+because it was fun, we named the channel with representative *nix-file-descriptor-like names, but the similarity ends
+to the name.
+
+The ``input multiplexer`` will group together whatever comes to one of the inputs channels and pass it to the
+transformation's ``transform()`` method.
+
+.. currentmodule:: rdc.etl.transform
+.. autoclass:: ITransform
+
+    .. automethod:: transform(hash, [channel=STDIN])
+
+The transform method should be a generator, yielding output lines (with an optional output channel id):
+
+.. code-block:: python
+
+    def transform(hash, channel=STDIN):
+        yield hash.copy({'foo': 'bar'})
+        yield hash.copy({'foo': 'baz'})
+
+
 All transforms are expected to have the following attributes:
+
+.. module:: rdc.etl.io
 
 * ``_input``, which should implement ``IReadable``
 * ``_output``, which should implement ``IWritable``

@@ -3,7 +3,7 @@ Contributing
 
 `The code is available on github <http://github.com/rdconseil/etl/>`_.
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ git clone https://github.com/rdconseil/etl.git
 

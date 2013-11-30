@@ -7,13 +7,13 @@ Using PyPI
 The project is currently marked as alpha. It's available on PyPI, but you need to specify a version spec for pip to
 find it:
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ pip install rdc.etl==1.0.0a3
 
 You can also ask for the latest version:
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ pip install rdc.etl\>1.0.0a
 
@@ -29,7 +29,7 @@ You can also install ``rdc.etl`` from sources, using git. Depending on what you 
 branch which contains the latest stable code (aka what is published to PyPI), or the ``dev`` branch (aka the target
 of incoming cool features).
 
-.. code-block:: shell
+.. code-block:: bash
 
     $ git clone https://github.com/rdconseil/etl.git
     $ cd etl

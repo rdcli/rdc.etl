@@ -15,21 +15,25 @@
 # limitations under the License.
 
 import unittest
+from rdc.etl.contrib.unittest import BaseTestCase
 from rdc.etl.hash import Hash
-from rdc.etl.transform.simple import SimpleTransform
+from rdc.etl.transform.map import Map
 
 
-class TransformSimpleTestCase(unittest.TestCase):
-    def _create_transform(self):
-        return SimpleTransform()
+class TransformMapTestCase(BaseTestCase):
+    def test_base_class_decorator(self):
+        @Map
+        def my_map(s):
+            for l in s.split('\n'):
+                yield {'f%d' % i: v for i, v in enumerate(l.split(':'))}
 
-    def test_remove(self):
-        t = self._create_transform()
-        t.remove('foo', 'boo')
-        r = t.transform(Hash({'foo': 'bar', 'bar': 'baz', 'boo': 'hiya'}))
-        self.assertIn('bar', r)
-        self.assertNotIn('foo', r)
-        self.assertNotIn('boo', r)
+        self.assertStreamEqual(
+            my_map((Hash({'_': 'a:b:c\nb:c:d\nc:d:e'}))), (
+                {'f0': 'a', 'f1': 'b', 'f2': 'c'},
+                {'f0': 'b', 'f1': 'c', 'f2': 'd'},
+                {'f0': 'c', 'f1': 'd', 'f2': 'e'},
+            ))
+
 
 if __name__ == '__main__':
     unittest.main()

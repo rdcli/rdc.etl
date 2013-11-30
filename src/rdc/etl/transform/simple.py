@@ -167,17 +167,36 @@ class SimpleTransform(Transform):
     Example:
 
     >>> t = SimpleTransform()
-    >>> # Apply "upper" method on "name" field, and store it back in "name" field.
-    >>> t.add('name').filter('upper')
-    >>> # Apply the lambda to "description" field content, and store it into the "full_description" field.
-    >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v)
-    >>> # Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
-    >>> # hashes, it is only usefull to override some parent stuff.
+
+    Apply "upper" method on "name" field, and store it back in "name" field.
+
+    >>> t.add('name').filter('upper') # doctest: +ELLIPSIS
+    <rdc.etl.transform.simple._SimpleItemTransformationDescriptor object at ...>
+
+    Apply the lambda to "description" field content, and store it into the "full_description" field.
+
+    >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v) # doctest: +ELLIPSIS
+    <rdc.etl.transform.simple._SimpleItemTransformationDescriptor object at ...>
+
+    Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
+    hashes, it is only usefull to override some parent stuff.
+
+    >>> t.useless = 'foo'
     >>> t.delete('useless')
-    >>> # Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
+
+    Mark the "notanymore" field for deletion upon transform. Output hashes will not anymore contain this field./
+
     >>> t.remove('notanymore')
-    >>> # Add a field (output hashes will contain this field, all with the same "foo bar" value).
+
+    Add a field (output hashes will contain this field, all with the same "foo bar" value).
+
     >>> t.test_field = 'foo bar'
+
+    .. todo::
+
+        XXX the way it's implemented is very error prone, as we need to exclude "builtins" manually from __dict__
+        iteration. A separate dict for transformed items would be better, as we don't use the "descriptor" ability of
+        attribute classes anyway.
 
     """
 
@@ -189,8 +208,9 @@ class SimpleTransform(Transform):
 
     def transform(self, hash, channel=STDIN):
         for name, value_getter in self.__dict__.items():
-            if name[0] == '_':
+            if name[0] == '_' or name in ('INPUT_CHANNELS', 'OUTPUT_CHANNELS', 'transform' ):
                 continue
+            print name, value_getter
 
             try:
                 conditions = list(value_getter.conditions)

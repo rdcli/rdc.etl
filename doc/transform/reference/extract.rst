@@ -1,0 +1,22 @@
+Extracts
+========
+
+.. automodule:: rdc.etl.transform.extract
+
+Extract (base class and decorator)
+::::::::::::::::::::::::::::::::::
+
+.. module:: rdc.etl.transform.extract
+.. autoclass:: Extract
+
+DatabaseExtract
+:::::::::::::::
+
+.. module:: rdc.etl.transform.extract.database
+.. autoclass:: DatabaseExtract
+
+FileExtract
+:::::::::::
+
+.. module:: rdc.etl.transform.extract.file
+.. autoclass:: FileExtract

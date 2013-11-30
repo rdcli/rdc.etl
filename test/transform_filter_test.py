@@ -13,22 +13,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from collections import OrderedDict
 
-from rdc.etl.transform import Transform
+import unittest
+from rdc.etl.contrib.unittest import BaseTestCase
+from rdc.etl.hash import Hash
+from rdc.etl.transform.filter import Filter
 
-def transformation(method):
-    """Decorate a method so it becomes a simple transformation.
+INPUT_DATA = (
+    OrderedDict((('foo', 'bar'), ('keepme', True), )),
+    OrderedDict((('foo', 'baz'), ('keepme', False), )),
+)
 
-    >>> @transformation
-    >>> def my_modifier(hash, channel):
-    ...     yield hash.copy((('foo', 'bar'), ))
+class TransformFilterTestCase(BaseTestCase):
+    def test_base_class_decorator(self):
+        @Filter
+        def my_filter(hash):
+            return hash['keepme'] == True
 
-    """
+        out = my_filter(*INPUT_DATA)
 
-    t = Transform()
-    t.transform = method
-    t.__name__ = method.__name__
-    return t
-
+        self.assertStreamEqual(out, (INPUT_DATA[0], ))
 
 
+if __name__ == '__main__':
+    unittest.main()

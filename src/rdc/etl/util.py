@@ -94,9 +94,14 @@ char_map = {u'À': 'A', u'Á': 'A', u'Â': 'A', u'Ã': 'A', u'Ä': 'Ae', u'Å': 
 
 
 def slugify(s, strip=False):
-    """
+    u"""
     Simple slug filter, that has no knowledge of diacritics. Prefer slughifi (see below) to this method for good slugs,
     even if for simple languages like english this may be enough (and probably faster).
+
+    >>> text = u"C'est déjà l'été."
+    >>> slugify(text)
+    'c-est-deja-l-ete-'
+
     """
     str = re.sub(r'\W+', '-', unidecode.unidecode(s).lower())
     if strip:
@@ -127,27 +132,20 @@ def unaccent(value):
 
 
 def slughifi(value, do_slugify=True, overwrite_char_map=None, strip=False):
-    """
+    u"""
     High Fidelity slugify - slughifi.py, v 0.1
 
     This was found somewhere on internet, and slightly adapted for our needs.
 
     Examples :
 
-    >>> text = 'C\'est déjà l\'été.'
-
+    >>> text = u"C'est déjà l\'été."
     >>> slughifi(text)
-    'cest-deja-lete'
-
-    >>> slughifi(text, overwrite_char_map={u'\'': '-',})
-    'c-est-deja-l-ete'
-
+    'c-est-deja-l-ete-'
+    >>> slughifi(text, overwrite_char_map={"'": '-',})
+    'c-est-deja-l-ete-'
     >>> slughifi(text, do_slugify=False)
-    "C'est deja l'ete."
-
-    # Normal slugify removes accented characters
-    >>> slugify(text)
-    'cest-dj-lt'
+    'C-est deja l-ete.'
 
     """
 

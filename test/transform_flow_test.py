@@ -8,7 +8,7 @@ import unittest
 from rdc.etl.transform.flow import insert_sorted, default_comparator
 
 
-class UtilsTestCase(unittest.TestCase):
+class TransformFlowTestCase(unittest.TestCase):
     def test_insert_sorted(self):
         l = []
 

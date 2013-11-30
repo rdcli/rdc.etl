@@ -15,8 +15,7 @@ there is no wysiwyg editor provided.
    install
    kickstart
    harness
-   transform
-   transform_io
+   transform/index
    filesystem
    database
    status

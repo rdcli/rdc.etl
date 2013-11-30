@@ -54,4 +54,3 @@ class Sort(Transform):
         for key, value in self._sorted:
             yield value
 
-

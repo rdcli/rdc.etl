@@ -13,18 +13,34 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
-
-class SimpleFilter(Transform):
+class Filter(Transform):
     """Filter out hashes from the stream depending on the :attr:`filter` callable return value, when called with the
-    current hash as parameter
+    current hash as parameter.
+
+    Can be used as a decorator on a filter callable.
+
+    .. attribute:: filter
+
+        A callable used to filter the hashes. If return value is True for a given hash, then the hash will be yield to
+        output. Otherwise, it will be burnt.
+
+    Example::
+
+        >>> from rdc.etl.hash import Hash
+        >>> def my_filter(hash):
+        ...     return hash['keepme'] == True
+        >>> my_filter = Filter(my_filter)
+        >>> print list(my_filter(
+        ...         Hash((('foo', 'bar'), ('keepme', True), )),
+        ...         Hash((('foo', 'baz'), ('keepme', False), )),
+        ...     ))
+        [<Hash {'foo': 'bar', 'keepme': True}>]
 
     """
 
-    #: A callable used to filter the hashes.
     filter = None
 
     def __init__(self, filter=None):
@@ -37,4 +53,9 @@ class SimpleFilter(Transform):
 
         if self.filter(hash):
             yield hash
+
+
+# For BC, deprecated.
+# todo remove in 2.0
+SimpleFilter = Filter
 

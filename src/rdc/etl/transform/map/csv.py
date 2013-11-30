@@ -30,10 +30,6 @@ class CsvMap(Transform):
     """
     Reads a CSV and yield the values, line-by-line.
 
-    .. attribute:: field
-
-        The input field.
-
     .. attribute:: delimiter
 
         The CSV delimiter.
@@ -52,16 +48,14 @@ class CsvMap(Transform):
 
     """
 
-    field = '_'
     delimiter = ';'
     quotechar = '"'
     headers = None
     skip = 0
 
     def __init__(self, field=None, delimiter=None, quotechar=None, headers=None, skip=None):
-        super(CsvMap, self).__init__()
+        super(CsvMap, self).__init__(field=field)
 
-        self.field = field or self.field
         self.delimiter = delimiter or self.delimiter
         self.quotechar = quotechar or self.quotechar
         self.headers = headers or self.headers

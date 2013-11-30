@@ -14,8 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Load transformations are the opposite of extracts. It take data from input and loads it into an external "thing"
-(database, filesystem, webservice, ...).
+import unittest
+from rdc.etl.hash import Hash
+from rdc.etl.transform.util import clean as hashcleaner
 
-"""
+def clean(v):
+    if isinstance(v, Hash):
+        return hashcleaner(v)
+    else:
+        return v
+
+class BaseTestCase(unittest.TestCase):
+    def assertStreamEqual(self, first, second, msg=None):
+        first = map(clean, first)
+        second = map(clean, second)
+        self.assertEqual(len(first), len(second), msg)
+        for i in xrange(0, len(first)):
+            left = first[i]
+            right = second[i]
+            self.assertEqual(left.items(), right.items(), msg)

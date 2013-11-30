@@ -18,21 +18,52 @@ import types
 from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
+from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
 
 class ITransform:
-
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def transform(self, hash, channel=STDIN):
-        """core transform method"""
+        """All input rows that comes to one of this transform's input channels will be passed to this method. If you
+        only have one input channel, you can safely ignore the channel value, although you'll need it in method
+        prototype."""
 
 class Transform(ITransform):
+    """Base class and decorator for transformations.
+
+    .. automethod:: transform
+
+    .. attribute:: INPUT_CHANNELS
+
+        List of input channel names.
+
+    .. attribute:: OUTPUT_CHANNELS
+
+        List of output channel names
+
+    Usage example::
+
+        >>> def my_transform(hash, channel=STDIN):
+        ...     yield hash.copy({'foo': hash['foo'].upper()})
+        >>> my_transform = Transform(my_transform)
+        >>> print list(my_transform(
+        ...         Hash({'foo': 'bar', 'bar': 'alpha'}),
+        ...         Hash({'foo': 'baz', 'bar': 'omega'}),
+        ...     ))
+        [<Hash {'bar': 'alpha', 'foo': 'BAR'}>, <Hash {'bar': 'omega', 'foo': 'BAZ'}>]
+
+    """
+
     INPUT_CHANNELS = (STDIN, )
     OUTPUT_CHANNELS = (STDOUT, STDERR, )
 
-    def __init__(self):
+    def __init__(self, transform=None, input_channels=None, output_channels=None):
+        self.transform = transform or self.transform
+        self.INPUT_CHANNELS = input_channels or self.INPUT_CHANNELS
+        self.OUTPUT_CHANNELS = output_channels or self.OUTPUT_CHANNELS
+
         self._s_in = 0
         self._s_out = 0
 
@@ -43,6 +74,21 @@ class Transform(ITransform):
         self._finalized = False
 
         self._name = self.__class__.__name__
+
+    def __call__(self, *stream, **options):
+        channel = options['channel'] if 'channel' in options else STDIN
+
+        for hash in stream:
+            for line in self.transform(hash, channel):
+                yield line
+
+    # ITransform implementation
+
+    def transform(self, hash, channel=STDIN):
+        """Core transformation method that will be called for each input data row."""
+        raise NotImplementedError('Abstract.')
+
+    # IO related
 
     def step(self, finalize=False):
         if not self._initialized:
@@ -64,13 +110,6 @@ class Transform(ITransform):
     def initialize(self):
         """If you need to execute code before any item is transformed, this is the place."""
         pass
-
-    def transform(self, hash, channel=STDIN):
-        """Core transformation method that will be called for each input data row.
-
-        Defined by ITransform
-        """
-        raise NotImplementedError('Abstract.')
 
     def finalize(self):
         """If you need to execute code after all items are transformed, this is the place. It's especially usefull for
