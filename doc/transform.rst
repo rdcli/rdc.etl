@@ -59,6 +59,20 @@ SimpleTransform
 .. module:: rdc.etl.transform.simple
 .. autoclass:: SimpleTransform
 
+Decorator
+:::::::::
+
+.. module:: rdc.etl.transform.decorator
+.. function:: transformation
+
+Filter
+::::::
+
+Filters remove some lines from the flux.
+
+.. module:: rdc.etl.transform.filter
+.. autoclass:: SimpleFilter
+
 Utilities
 :::::::::
 
