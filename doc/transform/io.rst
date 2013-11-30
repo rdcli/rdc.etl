@@ -26,6 +26,8 @@ The transform method should be a generator, yielding output lines (with an optio
         yield hash.copy({'foo': 'bar'})
         yield hash.copy({'foo': 'baz'})
 
+Input and output
+::::::::::::::::
 
 All transforms are expected to have the following attributes:
 
@@ -40,8 +42,13 @@ an ``OutputDemultiplexer``, each one having a list of channels populated after r
 ``STDOUT`` output and one alternate ``STDERR`` output. You can virtually have infinite input or outputs in your
 transformations (as though I have hard time imagining a use).
 
-The ``transform`` method does the real job, taking a hash and a channel and yielding either hashes (to send to default
-output) or hash, channel tuples (to select the output channel).
+.. autoclass:: InputMultiplexer
+.. autoclass:: OutputDemultiplexer
+
+.. image:: io.png
+
+Example
+:::::::
 
 Here is a simple transform that takes whatever comes to STDIN and put it on STDOUT and STDOUT2, and that puts everything
 that comes to STDIN2 and send it to STDERR.

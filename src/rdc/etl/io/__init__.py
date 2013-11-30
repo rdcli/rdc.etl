@@ -48,7 +48,7 @@ class IReadable:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get(self, block=True, timeout=True):
+    def get(self, block=True, timeout=None):
         """Read. Block/timeout are there for Queue compat."""
 
 class IWritable:
@@ -57,7 +57,7 @@ class IWritable:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, data, block=True, timeout=True):
+    def put(self, data, block=True, timeout=None):
         """Write. Block/timeout are there for Queue compat."""
 
 class InactiveIOError(IOError):
