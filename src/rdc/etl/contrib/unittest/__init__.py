@@ -30,6 +30,6 @@ class BaseTestCase(unittest.TestCase):
         second = map(clean, second)
         self.assertEqual(len(first), len(second), msg)
         for i in xrange(0, len(first)):
-            left = first[i]
-            right = second[i]
+            left = sorted(first[i])
+            right = sorted(second[i])
             self.assertEqual(left.items(), right.items(), msg)
