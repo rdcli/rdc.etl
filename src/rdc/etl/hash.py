@@ -46,7 +46,10 @@ class Hash(OrderedDict):
             elif renamer:
                 self[renamer(k)] = self[k]
                 del self[k]
+        return self
 
+    def update(self, other=None, **kwargs):
+        super(Hash, self).update(other, **kwargs)
         return self
 
     def remove(self, *keys):
