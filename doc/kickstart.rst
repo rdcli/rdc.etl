@@ -10,8 +10,10 @@ Create a Harness
 * Runnable
 * Manage threading
 
->>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
->>> harness = Harness()
+.. code-block:: python
+
+    from rdc.etl.harness.threaded import ThreadedHarness as Harness
+    harness = Harness()
 
 
 Create transformations
@@ -23,11 +25,13 @@ Extract some data ...
 ``Extract`` is a flexible base class to write extract transformations. We use a generator here, real life
 would usually use databases, webservices, files ...
 
-    >>> from rdc.etl.transform.extract import Extract
-    >>> @Extract
-    >>> def my_extract():
-    ...     yield {'foo': 'bar'}
-    ...     yield {'bar': 'baz'}
+.. code-block:: python
+
+    from rdc.etl.transform.extract import Extract
+    @Extract
+    def my_extract():
+        yield {'foo': 'bar', 'bar': 'min'}
+        yield {'foo': 'boo', 'bar': 'put'}
 
 
 :doc:`For more informations, see the extracts reference <transform/reference/extract>`.
@@ -35,14 +39,17 @@ would usually use databases, webservices, files ...
 Distort it ...
 --------------
 
-``Transform``is a flexible base class for all kind of transformations.
+``Transform`` is a flexible base class for all kind of transformations.
 
->>> from rdc.etl.transform import Transform
->>> @Transform
->>> def my_transform(hash, channel):
-...     yield hash.update({
-...         'foo': hash['foo'].upper()
-...     })
+.. code-block:: python
+
+    from rdc.etl.transform import Transform
+    @Transform
+    def my_transform(hash, channel):
+        yield hash.update({
+            'foo': hash['foo'].upper()
+        })
+
 
 :doc:`For more informations, see the transformations reference <transform/index>`.
 
@@ -51,8 +58,11 @@ Load it ...
 
 We'll use the screen as our load target ...
 
->>> from rdc.etl.transform.util import Log
->>> my_load = Log()
+.. code-block:: python
+
+    from rdc.etl.transform.util import Log
+    my_load = Log()
+
 
 :doc:`For more informations, see the loads reference <transform/reference/load>`.
 
@@ -69,13 +79,18 @@ Tie transformations together
 The ``Harness`` we created at the beginning of this tutorial has a ``add_chain()`` method that can be used to easily
 plug a list of ordered transformations together.
 
->>> harness.add_chain(my_extract, my_transform, my_load)
+.. code-block:: python
+
+    harness.add_chain(my_extract, my_transform, my_load)
 
 
 Run the job
 :::::::::::
 
-Our job is ready, you can run it::
+Our job is ready, you can run it.
 
->>> harness()
+.. code-block:: python
+
+    harness()
+
 
