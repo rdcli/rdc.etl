@@ -37,7 +37,7 @@ class Join(Transform):
         ...     return ({'a':1}, {'b':2}, )
 
         >>> map(clean, my_join({'foo': 'bar'}, {'foo': 'baz'}, ))
-        [<Hash {'a': 1, 'foo': 'bar'}>, <Hash {'b': 2, 'foo': 'bar'}>, <Hash {'a': 1, 'foo': 'baz'}>, <Hash {'b': 2, 'foo': 'baz'}>]
+        [H{'foo': 'bar', 'a': 1}, H{'foo': 'bar', 'b': 2}, H{'foo': 'baz', 'a': 1}, H{'foo': 'baz', 'b': 2}]
 
     """
 

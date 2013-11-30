@@ -44,7 +44,7 @@ class Extract(Transform):
         >>> my_extract = Extract(extract=data)
 
         >>> list(my_extract({}))
-        [<Hash {'foo': 'bar'}>, <Hash {'foo': 'baz'}>]
+        [H{'foo': 'bar'}, H{'foo': 'baz'}]
 
 
     Example using a callable::
@@ -59,7 +59,7 @@ class Extract(Transform):
         ...     )
 
         >>> list(my_extract({}))
-        [<Hash {'bar': 'baz'}>, <Hash {'bar': 'boo'}>]
+        [H{'bar': 'baz'}, H{'bar': 'boo'}]
 
 
     Example using a generator::
@@ -72,7 +72,7 @@ class Extract(Transform):
         ...     yield {'bar': 'boo'}
 
         >>> print list(my_extract({}))
-        [<Hash {'bar': 'baz'}>, <Hash {'bar': 'boo'}>]
+        [H{'bar': 'baz'}, H{'bar': 'boo'}]
 
     .. note::
 

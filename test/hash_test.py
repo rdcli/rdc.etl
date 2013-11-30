@@ -32,19 +32,14 @@ class HashTestCase(unittest.TestCase):
 
     def test_constructor_default(self):
         hash = Hash()
-        self.assertRaises(KeyError, hash.get, 'anything')
-
-    def test_constructor_nodot(self):
-        hash = Hash({'a.b': 'c'})
-        self.assertRaises(KeyError, hash.get, 'a.b')
-        self.assertEqual(hash['a_b'], 'c')
+        self.assertRaises(KeyError, hash.__getitem__, 'anything')
 
     def test_method_getter(self):
         hash = Hash({'foo': 'bar', 'bar': None})
         self.assertEqual(hash.get('foo', 'baz'), 'bar')
         self.assertEqual(hash.get('bar', 'baz'), None)
         self.assertEqual(hash.get('boo', 'foo'), 'foo')
-        self.assertRaises(KeyError, hash.get, 'boo')
+        self.assertEqual(hash.get('boo'), None)
 
     def test_item_getter(self):
         hash = Hash({'foo': 'bar', 'bar': None})
@@ -68,7 +63,6 @@ class HashTestCase(unittest.TestCase):
         self.assertEqual(hash['foo'], 'bar')
         hash['foo'] = 'yoho'
         self.assertEqual(hash['foo'], 'yoho')
-        self.assertEqual(hash.__setitem__('any', 'thing'), hash)
 
     def test_method_in(self):
         hash = Hash({'foo': 'bar', 'bar': None})

@@ -41,7 +41,7 @@ class Filter(Transform):
         ...         (('foo', 'bar'), ('keepme', True), ),
         ...         (('foo', 'baz'), ('keepme', False), ),
         ...     ))
-        [<Hash {'foo': 'bar', 'keepme': True}>]
+        [H{'foo': 'bar', 'keepme': True}]
 
     """
 

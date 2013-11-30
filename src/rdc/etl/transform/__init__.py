@@ -45,17 +45,17 @@ class Transform(ITransform):
 
     Example::
 
-        >>> from rdc.etl.transform import Transform
+        >>> from rdc.etl import H, Transform
 
         >>> @Transform
         ... def my_transform(hash, channel=STDIN):
         ...     yield hash.copy({'foo': hash['foo'].upper()})
 
         >>> print list(my_transform(
-        ...         {'foo': 'bar', 'bar': 'alpha'},
-        ...         {'foo': 'baz', 'bar': 'omega'},
+        ...         H(('foo', 'bar'), ('bar', 'alpha')),
+        ...         H(('foo', 'baz'), ('bar', 'omega')),
         ...     ))
-        [<Hash {'bar': 'alpha', 'foo': 'BAR'}>, <Hash {'bar': 'omega', 'foo': 'BAZ'}>]
+        [H{'foo': 'BAR', 'bar': 'alpha'}, H{'foo': 'BAZ', 'bar': 'omega'}]
 
     """
 

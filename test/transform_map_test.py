@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from collections import OrderedDict
 
 import unittest
 from rdc.etl.contrib.unittest import BaseTestCase
@@ -25,13 +26,13 @@ class TransformMapTestCase(BaseTestCase):
         @Map
         def my_map(s):
             for l in s.split('\n'):
-                yield {'f%d' % i: v for i, v in enumerate(l.split(':'))}
+                yield Hash((('f%d' % (i, ), v) for i, v in enumerate(l.split(':'))))
 
         self.assertStreamEqual(
             my_map((Hash({'_': 'a:b:c\nb:c:d\nc:d:e'}))), (
-                {'f0': 'a', 'f1': 'b', 'f2': 'c'},
-                {'f0': 'b', 'f1': 'c', 'f2': 'd'},
-                {'f0': 'c', 'f1': 'd', 'f2': 'e'},
+                OrderedDict((('f0', 'a'), ('f1', 'b'), ('f2', 'c'), ), ),
+                OrderedDict((('f0', 'b'), ('f1', 'c'), ('f2', 'd'), ), ),
+                OrderedDict((('f0', 'c'), ('f1', 'd'), ('f2', 'e'), ), ),
             ))
 
 
