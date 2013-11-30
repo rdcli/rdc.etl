@@ -9,6 +9,9 @@ setup(name='rdc.etl',
       version=__version__,
       description="Extract Transform Load (ETL) toolkit for python",
       long_description="""
+
+      **The whole documentation can be found at http://etl.rdc.li/**
+
       Toolkit for doing data integration related work, using connected
       transformations. Unlike java based tools like talend or pentaho
       data-integration, this is a DIY framework, and if you're looking for a
@@ -60,7 +63,7 @@ setup(name='rdc.etl',
       keywords='ETL Data-Integration',
       author='Romain Dorgueil',
       author_email='romain@dorgueil.net',
-      url='https://rdc.li/etl/',
+      url='http://etl.rdc.li/',
       download_url='https://github.com/rdconseil/etl/tarball/' + __version__,
       license='Apache License, Version 2.0',
       packages=find_packages('src', exclude=['ez_setup', 'example', 'test']),
