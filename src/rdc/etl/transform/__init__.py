@@ -79,6 +79,9 @@ class Transform(ITransform):
         channel = options['channel'] if 'channel' in options else STDIN
 
         for hash in stream:
+            if not isinstance(hash, Hash):
+                hash = Hash(hash)
+
             for line in self.transform(hash, channel):
                 yield line
 

@@ -27,15 +27,19 @@ class Filter(Transform):
         A callable used to filter the hashes. If return value is True for a given hash, then the hash will be yield to
         output. Otherwise, it will be burnt.
 
+
     Example::
 
+        >>> from rdc.etl.transform.filter import Filter
         >>> from rdc.etl.hash import Hash
-        >>> def my_filter(hash):
+
+        >>> @Filter
+        ... def my_filter(hash):
         ...     return hash['keepme'] == True
-        >>> my_filter = Filter(my_filter)
-        >>> print list(my_filter(
-        ...         Hash((('foo', 'bar'), ('keepme', True), )),
-        ...         Hash((('foo', 'baz'), ('keepme', False), )),
+
+        >>> list(my_filter(
+        ...         (('foo', 'bar'), ('keepme', True), ),
+        ...         (('foo', 'baz'), ('keepme', False), ),
         ...     ))
         [<Hash {'foo': 'bar', 'keepme': True}>]
 

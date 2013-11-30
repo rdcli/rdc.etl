@@ -25,6 +25,20 @@ class Join(Transform):
 
     This element can change the stream length, either positively (joining >1 item data) or negatively (joining <1 item data)
 
+    .. automethod:: join
+
+    Example::
+
+        >>> from rdc.etl.transform.join import Join
+        >>> from rdc.etl.transform.util import clean
+
+        >>> @Join
+        ... def my_join(hash, channel=STDIN):
+        ...     return ({'a':1}, {'b':2}, )
+
+        >>> map(clean, my_join({'foo': 'bar'}, {'foo': 'baz'}, ))
+        [<Hash {'a': 1, 'foo': 'bar'}>, <Hash {'b': 2, 'foo': 'bar'}>, <Hash {'a': 1, 'foo': 'baz'}>, <Hash {'b': 2, 'foo': 'baz'}>]
+
     """
 
     is_outer = False
@@ -40,9 +54,9 @@ class Join(Transform):
         super(Join, self).__init__()
         self.is_outer = is_outer or self.is_outer
         self.default_outer_join_data = default_outer_join_data or self.default_outer_join_data
-        self.get_join_data_for = join or self.get_join_data_for
+        self.join = join or self.join
 
-    def get_join_data_for(self, hash, channel=STDIN):
+    def join(self, hash, channel=STDIN):
         """
         Abtract method that must be implemented in concrete subclasses, to return the data that should be joined with
         the given row.
@@ -64,8 +78,18 @@ class Join(Transform):
         """
         raise NotImplementedError('Abstract.')
 
+    # BC
+    @property
+    def get_join_data_for(self):
+        return self.join
+
+    # BC
+    @get_join_data_for.setter
+    def get_join_data_for(self, value):
+        self.join = value
+
     def transform(self, hash, channel=STDIN):
-        join_data = self.get_join_data_for(hash, channel)
+        join_data = self.join(hash, channel)
 
         cnt = 0
         if join_data:

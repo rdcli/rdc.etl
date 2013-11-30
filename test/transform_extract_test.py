@@ -26,14 +26,14 @@ INPUT_DATA = (
 
 class TransformExtractTestCase(BaseTestCase):
     def test_base_class(self):
-        t = Extract(stream_data=INPUT_DATA)
+        t = Extract(extract=INPUT_DATA)
         self.assertStreamEqual(t(Hash()), INPUT_DATA)
 
     def test_base_class_generator(self):
         def generator():
             yield INPUT_DATA[0]
             yield INPUT_DATA[1]
-        t = Extract(stream_data=generator)
+        t = Extract(extract=generator)
         self.assertStreamEqual(t(Hash()), INPUT_DATA)
 
     def test_base_class_decorator(self):
