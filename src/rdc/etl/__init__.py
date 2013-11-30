@@ -22,8 +22,5 @@ except ImportError:
     import pkgutil
     __path__ = pkgutil.extend_path(__path__, __name__)
 
-from rdc.etl.hash import H
-from rdc.etl.transform import Transform
-
 __version__ = '1.0.0a4'
 

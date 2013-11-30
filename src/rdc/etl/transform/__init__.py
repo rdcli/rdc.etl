@@ -18,7 +18,7 @@ import types
 from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
-from rdc.etl.hash import Hash
+from rdc.etl.hash import Hash, H
 from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
 
 class ITransform:
@@ -44,8 +44,6 @@ class Transform(ITransform):
         List of output channel names
 
     Example::
-
-        >>> from rdc.etl import H, Transform
 
         >>> @Transform
         ... def my_transform(hash, channel=STDIN):
