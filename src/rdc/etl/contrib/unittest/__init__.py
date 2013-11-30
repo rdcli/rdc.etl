@@ -16,13 +16,7 @@
 
 import unittest
 from rdc.etl.hash import Hash
-from rdc.etl.transform.util import clean as hashcleaner
-
-def clean(v):
-    if isinstance(v, Hash):
-        return hashcleaner(v)
-    else:
-        return v
+from rdc.etl.transform.util import clean
 
 class BaseTestCase(unittest.TestCase):
     def assertStreamEqual(self, first, second, msg=None):
@@ -33,3 +27,4 @@ class BaseTestCase(unittest.TestCase):
             left = first[i]
             right = second[i]
             self.assertEqual(left.items(), right.items(), msg)
+
