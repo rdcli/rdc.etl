@@ -36,12 +36,13 @@ class Join(Transform):
     """
     default_outer_join_data = Hash()
 
-    def __init__(self, is_outer=False, default_outer_join_data=None):
+    def __init__(self, join = None, is_outer=False, default_outer_join_data=None):
         super(Join, self).__init__()
         self.is_outer = is_outer or self.is_outer
         self.default_outer_join_data = default_outer_join_data or self.default_outer_join_data
+        self.get_join_data_for = join or self.get_join_data_for
 
-    def get_join_data_for(self, hash):
+    def get_join_data_for(self, hash, channel=STDIN):
         """
         Abtract method that must be implemented in concrete subclasses, to return the data that should be joined with
         the given row.
@@ -64,7 +65,7 @@ class Join(Transform):
         raise NotImplementedError('Abstract.')
 
     def transform(self, hash, channel=STDIN):
-        join_data = self.get_join_data_for(hash)
+        join_data = self.get_join_data_for(hash, channel)
 
         cnt = 0
         if join_data:
