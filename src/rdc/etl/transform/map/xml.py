@@ -19,15 +19,14 @@ import string
 import xml.etree.ElementTree
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
-from watopy.util.html import unescape
-
-# XXX dependency on watopy, needs removal
+from rdc.etl.util import html_unescape
 
 class XmlMap(Transform):
     """
     Reads a XML and yield values for each root children.
 
     .. todo:: think how we want to make this flexible, xpath, etc ...
+    .. warning:: This does not work, don't use (or fix before :p).
 
     .. attribute:: field
 
@@ -53,7 +52,7 @@ class XmlMap(Transform):
         for i in object:
             if i.text is not None:
                 try:
-                    t = unescape(i.text.encode('raw_unicode_escape').decode('utf-8'))
+                    t = html_unescape(i.text.encode('raw_unicode_escape').decode('utf-8'))
                 except Exception, e:
                     # XXX Handle this error
                     #raise
@@ -62,7 +61,7 @@ class XmlMap(Transform):
             if i.tag == 'extras':
                 for extra in i:
                     if extra.text:
-                        d[extra.tag.lower()] = unescape(extra.text.encode('raw_unicode_escape').decode('utf-8'))
+                        d[extra.tag.lower()] = html_unescape(extra.text.encode('raw_unicode_escape').decode('utf-8'))
                     else:
                         d[extra.tag.lower()] = None
 

@@ -21,6 +21,8 @@ import requests
 import unidecode
 import types
 from datetime import datetime
+import HTMLParser
+import cgi
 
 VALID_HTML_TAGS = ['br']
 
@@ -223,5 +225,7 @@ def create_file_reader(path):
     return file_reader
 
 
+html_escape = cgi.escape
+html_unescape = HTMLParser.HTMLParser().unescape
 now = datetime.now
 
