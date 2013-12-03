@@ -15,38 +15,44 @@
 # limitations under the License.
 
 from rdc.etl.io import STDIN
-import re
 from rdc.etl.transform import Transform
+from copy import copy
 
 
 class SplitMap(Transform):
-    """"""
-    field = '_'
-    output_field = '_'
-    delimiter = r'\s+'
-    content = r'(.*)'
-    skip = 0
+    """
+    Split using a function.
 
-    def __init__(self, field=None, output_field=None, delimiter=None, content=None, skip=None):
+    .. stability:: alpha
+
+    """
+
+    field = '_'
+    _output_field = None
+
+    def __init__(self, split=None, field=None, output_field=None):
         super(SplitMap, self).__init__()
 
+        self.split = split or self.split
         self.field = field or self.field
-        self.output_field = output_field or field
-        self.delimiter = delimiter or self.delimiter
-        self.content = content or self.content
-        self.skip = skip or self.skip
+        self._output_field = output_field or self._output_field
 
-        self._current = 0
+    @property
+    def output_field(self):
+        return self._output_field or self.field
+
+    @output_field.setter
+    def output_field(self, value):
+        self._output_field = value
+
+    def split(self, field):
+        raise NotImplementedError('Abstract method "split" was not defined for %r.' % (self.__class__, ))
 
     def transform(self, hash, channel=STDIN):
-        s_in = hash.get(self.field)
-        for value in re.split(self.delimiter, s_in[self._current:], flags=re.MULTILINE):
-            if self.skip > 0:
-                self.skip -= 1
-                continue
-
-            yield hash \
-                .copy() \
-                .remove(self.field) \
-                .set(self.output_field, value)
+        values = self.split(hash[self.field])
+        del hash[self.field]
+        for value in values:
+            hash = copy(hash)
+            hash[self.output_field] = value
+            yield hash
 

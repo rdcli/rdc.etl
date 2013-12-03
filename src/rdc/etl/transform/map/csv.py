@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 import csv
 from rdc.etl.io import STDIN
-from rdc.etl.transform import Transform
+from rdc.etl.transform.map import Map
 
 try:
     import cStringIO as StringIO
@@ -26,7 +26,7 @@ except:
     import StringIO
 
 
-class CsvMap(Transform):
+class CsvMap(Map):
     """
     Reads a CSV and yield the values, line-by-line.
 
