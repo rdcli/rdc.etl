@@ -31,7 +31,7 @@ of incoming cool features).
 
 .. code-block:: bash
 
-    $ git clone https://github.com/rdconseil/etl.git
+    $ git clone https://github.com/rdcli/etl.git
     $ cd etl
     $ python setup.py develop
 
