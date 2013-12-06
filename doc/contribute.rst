@@ -1,11 +1,11 @@
 Contributing
 ============
 
-`The code is available on github <http://github.com/rdconseil/etl/>`_.
+`The code is available on github <http://github.com/rdcli/etl/>`_.
 
 .. code-block:: bash
 
-    $ git clone https://github.com/rdconseil/etl.git
+    $ git clone https://github.com/rdcli/etl.git
 
 The way to contribute is to fork the project in your own github account, and then make pull requests. If you don't want
 to use github, you can send pull requests by mail (``git format-patch`` is your friend) to romain(at)rdc(dot)li.
