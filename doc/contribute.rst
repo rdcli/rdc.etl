@@ -75,3 +75,9 @@ Milestone 1.2
 
 * Whatever will be needed at this time, let's focus on first versions for now (ideas welcome).
 
+Ideas
+-----
+
+* *"daemon" jobs*. Live forever, whenever something triggers an input, it runs through the transformations. Use cases: live
+  index update, PUT/POST webservice.
+
