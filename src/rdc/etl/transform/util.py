@@ -13,12 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pprint
+
 import sys
 from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
+from rdc.etl.util import terminal as t
 
+def shade(v):
+    return t.black(t.bold(v))
 
 class Log(Transform):
     """Identity transform that adds a console output side effect, to watch what is going through Queues at some point
@@ -28,8 +31,6 @@ class Log(Transform):
 
     field_filter = None
     condition = None
-    prefix = 'log> '
-    prefix2 = '   > '
 
     def __init__(self, field_filter=None, condition=None):
         """Initializes the Log transform. Usually, no
@@ -37,7 +38,7 @@ class Log(Transform):
         :param field_filter:
             An optional callable that will be used to filter which keys to display on transform.
         :param condition:
-            An optional callable that will be used to determine wether or not this row should be logged (aka sent to
+            An optional callable that will be used to determine whether or not this row should be logged (aka sent to
             stdout).
         """
         super(Log, self).__init__()
@@ -50,35 +51,44 @@ class Log(Transform):
 
         # pretty format Hashes
         if isinstance(s, Hash):
-            s = pprint.pformat(dict(s.items()))
-
-        # unpack
-        s = s.split('\n')
+            _s, s = s, []
+            for k in _s.keys():
+                s.append(u'  {k}{t.black}:{t.bold}{tp}{t.normal} {t.black}{t.bold}→{t.normal} {t.black}«{t.normal}{v}{t.black}»{t.normal}{t.clear_eol}'.format(k=k, v=_s[k], t=t, tp=type(_s[k]).__name__))
+        else:
+            # unpack
+            s = s.split('\n')
 
         # hack if one empty line
         if len(s) < 2 and not len(s[0].strip()):
             return ''
 
-        # first line prefix
-        s[0] = self.prefix + s[0]
-
-        # other lines prefixe
-        if len(s) > 1:
-            s[1:] = [self.prefix2 + line for line in s[1:]]
-
         # pack it back
         return '\n'.join(s)
+
+
+    def writehr(self, label=None):
+        if label:
+            label = unicode(label)
+            sys.stderr.write(t.black(u'·' * 4) + shade('{') + label + shade('}') + t.black(u'·' * (t.width - (6+len(label)))))
+        else:
+            sys.stderr.write(t.black(u'·' * (t.width)))
+
 
     def writeln(self, s):
         """Output method."""
         sys.stderr.write(self.format(s) + '\n')
 
+    def initialize(self):
+        self.lineno = 0
+
     def transform(self, hash, channel=STDIN):
         """Actual transformation."""
+        self.lineno += 1
         if not self.condition or self.condition(hash):
+            self.writehr(self.lineno)
             self.writeln(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter))
+            self.writehr()
         yield hash
-
 
 class Stop(Transform):
     """Sinker transform that stops anything through the pipes.

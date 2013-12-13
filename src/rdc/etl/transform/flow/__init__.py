@@ -14,14 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import copy
+
 def default_comparator(a, b):
     if a == b: return 0
     if a < b: return -1
     if a > b: return 1
 
 def default_merger(a, b):
-    a.update(b)
-    return a
+    """Create a copy of first argument and update with second argument's value."""
+    c = copy(a).update(b)
+    return c
 
 def get_lower(comparator, a, b):
     if comparator(a, b) > 0:

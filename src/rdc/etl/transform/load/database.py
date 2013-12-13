@@ -141,6 +141,9 @@ class DatabaseLoad(BaseDatabaseLoad):
                 hash = self.buffer.pop(0)
                 yield self.do_transform(hash)
 
+    def boot(self):
+        assert self.table_name, 'Table name is required.'
+
     def transform(self, hash, channel=STDIN):
         self.buffer.append(hash)
 
@@ -149,6 +152,8 @@ class DatabaseLoad(BaseDatabaseLoad):
                 yield _out
 
     def finalize(self):
+        super(DatabaseLoad, self).finalize()
+
         for _out in self.commit():
             yield _out
 

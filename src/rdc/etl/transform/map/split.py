@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from rdc.etl.error import AbstractError
 
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
@@ -46,7 +47,7 @@ class SplitMap(Transform):
         self._output_field = value
 
     def split(self, field):
-        raise NotImplementedError('Abstract method "split" was not defined for %r.' % (self.__class__, ))
+        raise AbstractError(self.split)
 
     def transform(self, hash, channel=STDIN):
         values = self.split(hash[self.field])

@@ -16,6 +16,7 @@
 
 import sys, os, platform
 from rdc.etl.status import IStatus
+from rdc.etl.util import terminal as t
 
 
 def has_ansi_support(handle=None):
@@ -28,20 +29,33 @@ def has_ansi_support(handle=None):
             return True
     return False
 
+
 class ConsoleStatus(IStatus):
     def __init__(self):
         self.ansi = has_ansi_support()
-        self._lc = 0
 
-    def update(self, transforms):
-        # while migrating to new io system, we need to support both list and dict
-        if not isinstance(transforms, dict):
-            transforms = dict([(id, transforms[id]) for id in range(0, len(transforms))])
+    def initialize(self, harness):
+        pass
 
-        if self.ansi:
-            sys.stdout.write("\033[F" * (self._lc))
-            print "\033[K", '  ', "-" * 80
-            for id, transform in transforms.items():
-                print "\033[K   ", id, transform
-            self._lc = len(transforms) + 1
+    def update(self, harness):
+        threads = harness._threads.items()
+        if t.is_a_tty:
+            self.write(threads)
+
+    def finalize(self, harness):
+        pass
+
+    @staticmethod
+    def write(threads, rewind=True):
+        t_cnt = len(threads)
+
+        for id, thread in threads:
+            if thread.is_alive():
+                print '   ', t.black('({})'.format(id)), t.bold(t.white('+')), thread.name, thread.transform.get_stats_as_string(), t.clear_eol
+            else:
+                print '   ', t.black('({})'.format(id) + ' - ' + thread.name + ' ' + thread.transform.get_stats_as_string()), t.clear_eol
+        if rewind:
+            print t.clear_eol
+            print t.move_up * (t_cnt + 2)
+
 

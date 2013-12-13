@@ -15,18 +15,30 @@
 # limitations under the License.
 
 from __future__ import absolute_import
+from copy import copy
+from inspect import isgenerator
 import string
-import xml.etree.ElementTree
-from rdc.etl.io import STDIN
-from rdc.etl.transform import Transform
+from xml.etree import ElementTree
+from rdc.etl.error import AbstractError
+from rdc.etl.transform.map import Map
 from rdc.etl.util import html_unescape
 
-class XmlMap(Transform):
+
+class XmlMap(Map):
     """
     Reads a XML and yield values for each root children.
 
     .. todo:: think how we want to make this flexible, xpath, etc ...
     .. warning:: This does not work, don't use (or fix before :p).
+
+    Definitions:
+
+        XML Item: In the context of an XmlMap, we define an XML Item as being either a children of the XML root if no
+        xpath has been provided, or one item returned by the XPath provided.
+
+    .. attribute:: map_item
+
+        Will be called for each input XML Item, and should return a dictionary of values for this item.
 
     .. attribute:: field
 
@@ -38,54 +50,38 @@ class XmlMap(Transform):
 
     """
 
-    field = None
     xpath = None
+    field = '_'
 
-    def __init__(self, field=None, xpath=None):
+    def __init__(self, map_item=None, xpath=None, field=None):
         super(XmlMap, self).__init__()
 
-        self.field = field or self.field
+        self.map_item = map_item or self.map_item
         self.xpath = xpath or self.xpath
+        self.field = field or self.field
 
-    def get_dict_from_object(self, object):
-        d = {}
-        for i in object:
-            if i.text is not None:
-                try:
-                    t = html_unescape(i.text.encode('raw_unicode_escape').decode('utf-8'))
-                except Exception, e:
-                    # XXX Handle this error
-                    #raise
-                    t = filter(lambda x: x in string.printable, i.text.encode('raw_unicode_escape'))
-                d[i.tag] = t
-            if i.tag == 'extras':
-                for extra in i:
-                    if extra.text:
-                        d[extra.tag.lower()] = html_unescape(extra.text.encode('raw_unicode_escape').decode('utf-8'))
-                    else:
-                        d[extra.tag.lower()] = None
-
-        if not 'description' in d:
-            d['description'] = d['name']
-        d['flux_id'] = d['sku']
-        d['flux_group_id'] = d['sku']
-
-        return d
-
-    def transform(self, hash, channel=STDIN):
-        xml_source = hash.get(self.field)
-
-        if xml_source is None:
-            raise KeyError(
-                self.__class__.__name__ + ' transform() method was expecting to find a "' + self.field + '" ' +
-                ' field, containing the XML source, but this field is not preseent in source hash (' + repr(hash) + ').'
-            )
-
-        root = xml.etree.ElementTree.fromstring(xml_source)
+    def map(self, value):
+        items = ElementTree.fromstring(value)
 
         if self.xpath:
-            # TODO implement
-            pass
+            items = items.findall(self.xpath)
 
-        for o in root:
-            yield hash.copy({self.field: o}).update(self.get_dict_from_object(o))
+        for item in items:
+            mapped = {self.field: item}
+            value_for_item = self.map_item(item)
+            if isgenerator(value_for_item):
+                for _value in value_for_item:
+                    yield copy(mapped).update(_value)
+            else:
+                try:
+                    mapped.update(value_for_item)
+                    yield mapped
+                except TypeError, e:
+                    raise TypeError('{name}.map_item(...) must be iterable.'.format(
+                        name=type(self).__name__
+                    ))
+
+    def map_item(self, item):
+        raise AbstractError(self.map_item)
+
+

@@ -15,20 +15,21 @@
 # limitations under the License.
 
 from functools import partial
-import pprint
 from rdc.etl.io import STDIN, STDIN2
 from rdc.etl.transform import Transform
 from rdc.etl.transform.flow import default_comparator, get_lower, insert_sorted, default_merger
 
 class SortedJoin(Transform):
     INPUT_CHANNELS = (STDIN, STDIN2, )
+    is_outer = False
 
-    def __init__(self, key, merger=None, comparator=None):
+    def __init__(self, key, merger=None, comparator=None, is_outer=None):
         super(SortedJoin, self).__init__()
 
         self.key = key
         self.merger = merger or default_merger
         self.comparator = comparator or default_comparator
+        self.is_outer = is_outer or self.is_outer
 
     def initialize(self):
         self._minimum = None
@@ -48,7 +49,7 @@ class SortedJoin(Transform):
             yield data
 
     def consume(self):
-        while  len(self._sorted[STDIN]) and len(self._sorted[STDIN2]):
+        while len(self._sorted[STDIN]) and len(self._sorted[STDIN2]):
             side = self.comparator(self._sorted[STDIN2][0][0], self._sorted[STDIN][0][0])
 
             if side == 0:
@@ -56,11 +57,14 @@ class SortedJoin(Transform):
                 _key, _data = self._sorted[STDIN2].pop(0)
                 pos = 0
                 while (pos < (len(self._sorted[STDIN]) - 1)) and (self.comparator(self._sorted[STDIN][pos][0], _key) == 0):
-                    self.merger(self._sorted[STDIN][pos][1], _data)
+                    self.merger(_data, self._sorted[STDIN][pos][1])
                     pos += 1
             elif side == -1:
-                # no match, destroy
-                self._sorted[STDIN2].pop(0)
+                # no match
+                if self.is_outer:
+                    yield self._sorted[STDIN2].pop(0)[1]
+                else:
+                    self._sorted[STDIN2].pop(0)
             elif side == 1:
                 # passed, yield possible
                 yield self._sorted[STDIN].pop(0)[1]

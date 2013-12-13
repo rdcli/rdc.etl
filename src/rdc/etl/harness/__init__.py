@@ -15,6 +15,8 @@
 # limitations under the License.
 
 from abc import ABCMeta, abstractmethod
+from rdc.etl.error import AbstractError
+
 
 class IHarness:
     """
@@ -29,12 +31,15 @@ class IHarness:
     @abstractmethod
     def __call__(self):
         """Actual harness run."""
+        raise AbstractError(self.__call__)
 
     @abstractmethod
-    def add(self, transform): pass
+    def add(self, transform):
+        raise AbstractError(self.add)
 
     @abstractmethod
-    def loop(self): pass
+    def loop(self):
+        raise AbstractError(self.loop)
 
 
 class AbstractHarness(IHarness):
@@ -48,11 +53,14 @@ class AbstractHarness(IHarness):
     def __init__(self):
         self.status = []
 
-    def initialize(self): pass
+    def initialize(self):
+        pass
 
-    def validate(self): pass
+    def validate(self):
+        pass
 
-    def finalize(self): pass
+    def finalize(self):
+        pass
 
     def __call__(self):
         """Implements IHarness.__call__()"""
@@ -61,8 +69,4 @@ class AbstractHarness(IHarness):
         _value = self.loop()
         self.finalize()
         return _value
-
-    @abstractmethod
-    def update_status(self): pass
-
 

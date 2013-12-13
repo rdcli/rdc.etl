@@ -14,33 +14,66 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 from abc import ABCMeta, abstractmethod
 from copy import copy
-import time
-from rdc.etl.hash import Hash
 from Queue import Queue
+from rdc.etl.error import AbstractError, InactiveReadableError, InactiveWritableError
+from rdc.etl.hash import Hash
 
+# Input channels
 STDIN = 0
 STDIN2 = 1
+STDIN3 = 2
+
+# Output channels
 STDOUT = 0
 STDERR = -1
 STDOUT2 = 1
+STDOUT3 = 2
+
+# Default channels
 DEFAULT_INPUT_CHANNEL = STDIN
 DEFAULT_OUTPUT_CHANNEL = STDOUT
+
+# Types
 INPUT_TYPE = 'input'
 OUTPUT_TYPE = 'output'
 
+# Human friendly channel names
+CHANNEL_NAMES = {
+    INPUT_TYPE: {
+        STDIN: 'in',
+        STDIN2: 'in2',
+        STDIN3: 'in3',
+    },
+    OUTPUT_TYPE: {
+        STDOUT: 'out',
+        STDERR: 'err',
+        STDOUT2: 'out2',
+        STDOUT3: 'out3',
+    },
+}
+
 
 class Token(object):
+    """Factory for signal oriented queue messages."""
+
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
         return '<%s>' % (self.name, )
 
+# Begin token raises a message queue runlevel.
 Begin = Token('Begin')
+
+# End token lowers a message queue runlevel.
 End = Token('End')
+
+# Default buffer size for queues.
 BUFFER_SIZE = 8192
+
 
 class IReadable:
     """Interface for things you can read from."""
@@ -50,6 +83,8 @@ class IReadable:
     @abstractmethod
     def get(self, block=True, timeout=None):
         """Read. Block/timeout are there for Queue compat."""
+        raise AbstractError(self.get)
+
 
 class IWritable:
     """Interface for things you can write to."""
@@ -59,17 +94,7 @@ class IWritable:
     @abstractmethod
     def put(self, data, block=True, timeout=None):
         """Write. Block/timeout are there for Queue compat."""
-
-class InactiveIOError(IOError):
-    pass
-
-
-class InactiveReadableError(InactiveIOError):
-    pass
-
-
-class InactiveWritableError(InactiveIOError):
-    pass
+        raise AbstractError(self.put)
 
 
 class InputMultiplexer(IReadable):

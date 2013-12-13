@@ -80,6 +80,7 @@ setup(name='rdc.etl',
         'unidecode',
         'werkzeug', # how to get cached_property without this ? btw, the webapp2 version is better
         'sqlalchemy',
+        'blessings',
       ],
       entry_points="""
       # -*- Entry points: -*-

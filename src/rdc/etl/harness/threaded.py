@@ -89,6 +89,10 @@ class ThreadedHarness(AbstractHarness):
         for id, thread in self._threads.items():
             yield id, thread
 
+    def get_transforms(self):
+        for id, transform in self._transforms.items():
+            yield id, transform
+
     def add(self, transform):
         """Register a transformation, create a thread object to manage its future lifecycle."""
         id = self._current_id.next()
@@ -115,6 +119,9 @@ class ThreadedHarness(AbstractHarness):
         for id, thread in self._threads.items():
             thread.start()
 
+        for status in self.status:
+            status.initialize(self)
+
         # main loop until all threads are done
         while True:
             is_alive = False
@@ -122,7 +129,8 @@ class ThreadedHarness(AbstractHarness):
                 is_alive = is_alive or thread.is_alive()
 
             # communicate with the world
-            self.update_status()
+            for status in self.status:
+                status.update(self)
 
             # exit point
             if not is_alive:
@@ -132,14 +140,12 @@ class ThreadedHarness(AbstractHarness):
             # threads finished.
             time.sleep(0.2)
 
+        for status in self.status:
+            status.finalize(self)
+
         # Wait for all transform threads to die
         for id, thread in self._threads.items():
             thread.join()
-
-    def update_status(self):
-        """Sends current status to all status objects. This API part is subject to changes."""
-        for status in self.status:
-            status.update(self._threads.values())
 
 
     def add_chain(self, *transforms, **kwargs):

@@ -13,16 +13,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-from abc import ABCMeta, abstractmethod
-from rdc.etl.error import AbstractError
+class AbstractError(NotImplementedError):
+    """Abstract error is a convenient error to declare a method as "being left as an exercise for the reader"."""
+
+    def __init__(self, method):
+        super(AbstractError, self).__init__('Call to abstract method {class_name}.{method_name}(...): missing implementation.'.format(
+            class_name=type(method.im_self).__name__,
+            method_name=method.__name__
+        ))
 
 
-class IStatus:
+class InactiveIOError(IOError):
+    pass
 
-    __metaclass__ = ABCMeta
 
-    @abstractmethod
-    def update(self, harness):
-        """update this status"""
-        raise AbstractError(self.update)
+class InactiveReadableError(InactiveIOError):
+    pass
+
+
+class InactiveWritableError(InactiveIOError):
+    pass
+

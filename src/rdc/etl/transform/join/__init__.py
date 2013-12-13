@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl.error import AbstractError
 from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
@@ -76,7 +77,7 @@ class Join(Transform):
         Default join type is inner, to preserve backward compatibility.
 
         """
-        raise NotImplementedError('Abstract method "join" was not defined for %r.' % (self.__class__, ))
+        raise AbstractError(self.join)
 
     def transform(self, hash, channel=STDIN):
         join_data = self.join(hash, channel)

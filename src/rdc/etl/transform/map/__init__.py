@@ -22,6 +22,8 @@ By default, maps use the topic (`_`) field for input
 
 """
 
+from abc import abstractmethod
+from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
@@ -29,7 +31,7 @@ from rdc.etl.transform import Transform
 class Map(Transform):
     """Base class for mappers.
 
-    .. attribute:: mapper
+    .. attribute:: map
 
         Map logic callable. Takes the hash's field value and yields iterable data.
 
@@ -53,18 +55,19 @@ class Map(Transform):
 
     """
 
+    map = None
     field = '_'
 
-    def __init__(self, mapper=None, field=None):
+    def __init__(self, map=None, field=None):
         super(Map, self).__init__()
 
-        self.mapper = mapper or self.mapper
+        self.map = map or self.map
         self.field = field or self.field
 
-    def mapper(self, value):
-        raise NotImplementedError('Abstract.')
+    def map(self, value):
+        raise AbstractError(self.map)
 
     def transform(self, hash, channel=STDIN):
-        for line in self.mapper(hash[self.field]):
+        for line in self.map(hash[self.field]):
             yield hash.copy(line)
 

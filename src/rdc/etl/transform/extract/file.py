@@ -15,12 +15,11 @@
 # limitations under the License.
 
 from werkzeug.utils import cached_property
-from rdc.etl.io import STDIN
-from rdc.etl.transform import Transform
+from rdc.etl.transform.extract import Extract
 from rdc.etl.util import create_http_reader, create_file_reader
 
 
-class FileExtract(Transform):
+class FileExtract(Extract):
     """
     Extract data from a file into a field.
 
@@ -56,6 +55,8 @@ class FileExtract(Transform):
     def content(self):
         return self.reader()
 
-    def transform(self, hash, channel=STDIN):
-        yield hash.set(self.output_field, self.content)
+    def extract(self):
+        yield {
+            self.output_field: self.content
+        }
 

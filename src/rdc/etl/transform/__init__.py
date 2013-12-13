@@ -13,13 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import copy
 
 import types
 from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
+from rdc.etl.error import AbstractError
 from rdc.etl.hash import Hash, H
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End, STDOUT2, STDIN2
+
 
 class ITransform:
     __metaclass__ = ABCMeta
@@ -29,6 +32,7 @@ class ITransform:
         """All input rows that comes to one of this transform's input channels will be passed to this method. If you
         only have one input channel, you can safely ignore the channel value, although you'll need it in method
         prototype."""
+        raise AbstractError(self.transform)
 
 class Transform(ITransform):
     """Base class and decorator for transformations.
@@ -59,6 +63,7 @@ class Transform(ITransform):
 
     INPUT_CHANNELS = (STDIN, )
     OUTPUT_CHANNELS = (STDOUT, STDERR, )
+    _name = None
 
     def __init__(self, transform=None, input_channels=None, output_channels=None):
         self.transform = transform or self.transform
@@ -71,10 +76,9 @@ class Transform(ITransform):
         self._input = InputMultiplexer(self.INPUT_CHANNELS)
         self._output = OutputDemultiplexer(self.OUTPUT_CHANNELS)
 
+        self._booted = False
         self._initialized = False
         self._finalized = False
-
-        self._name = self.__class__.__name__
 
     def __call__(self, *stream, **options):
         channel = options['channel'] if 'channel' in options else STDIN
@@ -90,11 +94,16 @@ class Transform(ITransform):
 
     def transform(self, hash, channel=STDIN):
         """Core transformation method that will be called for each input data row."""
-        raise NotImplementedError('Abstract.')
+        raise AbstractError(self.transform)
 
     # IO related
 
     def step(self, finalize=False):
+        if not self._booted:
+            # todo find something to make this work
+            self.boot()
+            self._booted = True
+
         if not self._initialized:
             self._initialized = True
             self.__execute_and_handle_output(self.initialize)
@@ -110,6 +119,10 @@ class Transform(ITransform):
                 self._finalized = True
                 self.__execute_and_handle_output(self.finalize)
                 self._output.put_all(End)
+
+    def boot(self):
+        """Just before transformation is started, validate everything is ready."""
+        pass
 
     def initialize(self):
         """If you need to execute code before any item is transformed, this is the place."""
@@ -130,7 +143,7 @@ class Transform(ITransform):
 
     @property
     def __name__(self):
-        return self._name
+        return self._name or type(self).__name__
 
     @__name__.setter
     def __name__(self, value):
@@ -163,4 +176,33 @@ class Transform(ITransform):
         elif results is not None:
             self._s_out += 1
             self._output.put(results)
+
+
+class Validate(Transform):
+    """An identity transform (input is passed to output unchanged). Aims for data validation."""
+
+    CHANNEL_MAP = {
+        STDIN: STDOUT,
+        STDIN2: STDOUT2,
+    }
+
+    def __init__(self, validate=None):
+        # Use the callable name if provided
+        if validate and not self._name:
+            self._name = validate.__name__
+
+        # Parent constructor
+        super(Validate, self).__init__()
+
+        self.validate = validate or self.validate
+
+
+    def validate(self, hash, channel=STDIN):
+        raise AbstractError(self.validate)
+
+    def transform(self, hash, channel=STDIN):
+        # TODO instead of a copy, pass a "ReadOnly" decorated hash.
+        self.validate(copy(hash), channel)
+        yield hash, self.CHANNEL_MAP[STDIN]
+
 

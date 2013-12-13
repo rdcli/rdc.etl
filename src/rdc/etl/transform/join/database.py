@@ -41,7 +41,7 @@ class DatabaseJoin(Join):
     dataset_keys_for_values = []
 
     def __init__(self, engine, query=None, dataset_keys_for_values=None, is_outer=False, default_outer_join_data=None):
-        super(DatabaseJoin, self).__init__(is_outer, default_outer_join_data)
+        super(DatabaseJoin, self).__init__(is_outer=is_outer, default_outer_join_data=default_outer_join_data)
 
         # parameters
         self.engine = engine

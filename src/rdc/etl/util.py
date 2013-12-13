@@ -23,6 +23,7 @@ import types
 from datetime import datetime
 import HTMLParser
 import cgi
+from blessings import Terminal as _Terminal
 
 VALID_HTML_TAGS = ['br']
 
@@ -224,7 +225,7 @@ def create_file_reader(path):
 
     return file_reader
 
-
+terminal = _Terminal()
 html_escape = cgi.escape
 html_unescape = HTMLParser.HTMLParser().unescape
 now = datetime.now

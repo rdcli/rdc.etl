@@ -19,8 +19,8 @@ Extracts are transformations that generate output lines from something that is n
 As it will yield all data for each input row, the input given is usually only one empty line.
 
 """
-from rdc.etl.hash import Hash
 
+from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
@@ -92,7 +92,7 @@ class Extract(Transform):
             self.__name__ = self.extract.__name__
 
     def extract(self):
-        raise NotImplementedError('Abstract.')
+        raise AbstractError(self.extract)
 
     # BC
     @property
