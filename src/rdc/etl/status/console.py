@@ -31,8 +31,18 @@ def has_ansi_support(handle=None):
 
 
 class ConsoleStatus(IStatus):
-    def __init__(self):
+    """
+    Outputs status information to the connected stdout. Can be a TTY, with or without support for colors/cursor
+    movements, or a non tty (pipe, file, ...). The features are adapted to terminal capabilities.
+
+    .. attribute:: prefix
+
+        String prefix of output lines.
+
+    """
+    def __init__(self, prefix=''):
         self.ansi = has_ansi_support()
+        self.prefix = prefix
 
     def initialize(self, harness):
         pass
@@ -40,20 +50,21 @@ class ConsoleStatus(IStatus):
     def update(self, harness):
         threads = harness._threads.items()
         if t.is_a_tty:
-            self.write(threads)
+            self.write(threads, prefix=self.prefix)
 
     def finalize(self, harness):
         pass
 
     @staticmethod
-    def write(threads, rewind=True):
+    def write(threads, prefix='', rewind=True):
         t_cnt = len(threads)
 
         for id, thread in threads:
             if thread.is_alive():
-                print '   ', t.black('({})'.format(id)), t.bold(t.white('+')), thread.name, thread.transform.get_stats_as_string(), t.clear_eol
+                _line = ''.join((t.black('({})'.format(id)), ' ', t.bold(t.white('+')), ' ',  thread.name, ' ', thread.transform.get_stats_as_string(), ' ', ))
             else:
-                print '   ', t.black('({})'.format(id) + ' - ' + thread.name + ' ' + thread.transform.get_stats_as_string()), t.clear_eol
+                _line = t.black(''.join(('({})'.format(id), ' - ', thread.name, ' ', thread.transform.get_stats_as_string(), ' ', )))
+            print prefix + _line + t.clear_eol
         if rewind:
             print t.clear_eol
             print t.move_up * (t_cnt + 2)
