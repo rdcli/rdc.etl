@@ -14,3 +14,4 @@ ConsoleStatus
 
 .. module:: rdc.etl.status.console
 .. autoclass:: ConsoleStatus
+

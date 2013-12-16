@@ -17,11 +17,10 @@
 from __future__ import absolute_import
 from copy import copy
 from inspect import isgenerator
-import string
 from xml.etree import ElementTree
 from rdc.etl.error import AbstractError
+from rdc.etl.hash import Hash
 from rdc.etl.transform.map import Map
-from rdc.etl.util import html_unescape
 
 
 class XmlMap(Map):
@@ -67,7 +66,7 @@ class XmlMap(Map):
             items = items.findall(self.xpath)
 
         for item in items:
-            mapped = {self.field: item}
+            mapped = Hash(((self.field, item, ), ))
             value_for_item = self.map_item(item)
             if isgenerator(value_for_item):
                 for _value in value_for_item:
