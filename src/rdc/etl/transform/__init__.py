@@ -66,7 +66,10 @@ class Transform(ITransform):
     _name = None
 
     def __init__(self, transform=None, input_channels=None, output_channels=None):
-        self.transform = transform or self.transform
+        # Use the callable name if provided
+        if transform and not self._name:
+            self._name = transform.__name__
+
         self.INPUT_CHANNELS = input_channels or self.INPUT_CHANNELS
         self.OUTPUT_CHANNELS = output_channels or self.OUTPUT_CHANNELS
 
@@ -79,6 +82,8 @@ class Transform(ITransform):
         self._booted = False
         self._initialized = False
         self._finalized = False
+
+        self.transform = transform or self.transform
 
     def __call__(self, *stream, **options):
         channel = options['channel'] if 'channel' in options else STDIN
