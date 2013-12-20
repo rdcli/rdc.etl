@@ -14,16 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-import time
-from BeautifulSoup import BeautifulSoup
-import requests
-import unidecode
-import types
-from datetime import datetime
-import HTMLParser
 import cgi
+import HTMLParser
+import time
+import re
+import requests
+import types
+import unidecode
+from BeautifulSoup import BeautifulSoup
 from blessings import Terminal as _Terminal
+from datetime import datetime
+from webapp2 import cached_property
 
 VALID_HTML_TAGS = ['br']
 
@@ -229,4 +230,5 @@ terminal = _Terminal()
 html_escape = cgi.escape
 html_unescape = HTMLParser.HTMLParser().unescape
 now = datetime.now
+cached_property = cached_property
 

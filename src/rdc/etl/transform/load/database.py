@@ -16,11 +16,15 @@
 
 from rdc.etl.io import STDIN
 from sqlalchemy import MetaData, Table
-from werkzeug.utils import cached_property
 from rdc.etl.transform import Transform
-from rdc.etl.util import now
+from rdc.etl.util import now, cached_property
 
-class BaseDatabaseLoad(Transform):
+class DatabaseLoad(Transform):
+    """
+
+    """
+
+    engine = None
     table_name = None
     fetch_columns = None
     insert_only_fields = None
@@ -28,26 +32,29 @@ class BaseDatabaseLoad(Transform):
     created_at_field = 'created_at'
     updated_at_field = 'updated_at'
 
-    def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None, insert_only_fields=None):
-        super(BaseDatabaseLoad, self).__init__()
-        self.engine = engine
-        self._query_count = 0
+    def __init__(self, engine=None, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None, updated_at_field=None, insert_only_fields=None):
+        super(DatabaseLoad, self).__init__()
+
+        self.engine = engine or self.engine
         self.table_name = table_name or self.table_name
 
         self.fetch_columns = {}
-        if isinstance(fetch_columns, list): self.add_fetch_column(*fetch_columns)
-        elif isinstance(fetch_columns, dict): self.add_fetch_column(**fetch_columns)
+        if isinstance(fetch_columns, list):
+            self.add_fetch_column(*fetch_columns)
+        elif isinstance(fetch_columns, dict):
+            self.add_fetch_column(**fetch_columns)
 
         self.discriminant = discriminant or self.discriminant
         self.created_at_field = created_at_field or 'created_at'
         self.updated_at_field = updated_at_field or 'updated_at'
-
         self.insert_only_fields = insert_only_fields or ()
 
-    def get_existing_keys(self, dataset, insert=False):
-        keys = dataset.keys()
-        column_names = self.table.columns.keys()
-        return [key for key in keys if key in column_names and (insert or (key not in self.insert_only_fields))]
+        self._buffer = []
+        self._connection = None
+        self._max_buffer_size = 1000
+        self._last_duration = None
+        self._last_commit_at = None
+        self._query_count = 0
 
     @cached_property
     def metadata(self):
@@ -57,20 +64,40 @@ class BaseDatabaseLoad(Transform):
     def table(self):
         return Table(self.table_name, self.metadata, autoload=True, autoload_with=self.engine)
 
-    def find(self, dataset, connection=None):
-        query = 'SELECT * FROM ' + self.table_name + ' WHERE ' + (' AND '.join([key_atom + ' = %s' for key_atom in self.discriminant])) + ' LIMIT 1;'
-        rp = (connection or self.connection).execute(query, [dataset.get(key_atom) for key_atom in self.discriminant])
+    @property
+    def now(self):
+        return now()
 
-        return rp.fetchone()
+    @property
+    def connection(self):
+        if self._connection is None:
+            self._connection = self.engine.connect()
+        return self._connection
+
+    def close_connection(self):
+        self._connection.close()
+        self._connection = None
+
+    def get_existing_keys(self, dataset, insert=False):
+        keys = dataset.keys()
+        column_names = self.table.columns.keys()
+        return [key for key in keys if key in column_names and (insert or (key not in self.insert_only_fields))]
 
     def add_fetch_column(self, *columns, **aliased_columns):
         self.fetch_columns.update(aliased_columns)
         for column in columns:
             self.fetch_columns[column] = column
 
-    @property
-    def now(self):
-        return now()
+    def find(self, dataset, connection=None):
+        query = 'SELECT * FROM ' + self.table_name + ' WHERE ' + (' AND '.join([key_atom + ' = %s' for key_atom in self.discriminant])) + ' LIMIT 1;'
+        rp = (connection or self.connection).execute(query, [dataset.get(key_atom) for key_atom in self.discriminant])
+        return rp.fetchone()
+
+    def commit(self):
+        with self.connection.begin():
+            while len(self._buffer):
+                hash = self._buffer.pop(0)
+                yield self.do_transform(hash)
 
     def do_transform(self, hash):
         row = self.find(hash)
@@ -111,43 +138,9 @@ class BaseDatabaseLoad(Transform):
         return hash
 
     def transform(self, hash, channel=STDIN):
-        with self.connection.begin():
-            yield self.do_transform(hash)
+        self._buffer.append(hash)
 
-class DatabaseLoad(BaseDatabaseLoad):
-    buffer_size = 1000
-
-    def __init__(self, engine, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None,
-                 updated_at_field=None, insert_only_fields=None):
-        super(DatabaseLoad, self).__init__(engine, table_name, fetch_columns, discriminant, created_at_field,
-                                            updated_at_field, insert_only_fields)
-
-        self.buffer = []
-        self._connection = None
-
-    @property
-    def connection(self):
-        if self._connection is None:
-            self._connection = self.engine.connect()
-        return self._connection
-
-    def close_connection(self):
-        self._connection.close()
-        self._connection = None
-
-    def commit(self):
-        with self.connection.begin():
-            while len(self.buffer):
-                hash = self.buffer.pop(0)
-                yield self.do_transform(hash)
-
-    def boot(self):
-        assert self.table_name, 'Table name is required.'
-
-    def transform(self, hash, channel=STDIN):
-        self.buffer.append(hash)
-
-        if len(self.buffer) >= self.buffer_size:
+        if len(self._buffer) >= self._max_buffer_size:
             for _out in self.commit():
                 yield _out
 

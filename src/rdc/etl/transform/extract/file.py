@@ -14,9 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from werkzeug.utils import cached_property
 from rdc.etl.transform.extract import Extract
-from rdc.etl.util import create_http_reader, create_file_reader
+from rdc.etl.util import create_http_reader, create_file_reader, cached_property
 
 
 class FileExtract(Extract):
