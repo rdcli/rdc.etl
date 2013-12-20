@@ -69,9 +69,9 @@ class Log(Transform):
     def writehr(self, label=None):
         if label:
             label = unicode(label)
-            sys.stderr.write(t.black(u'·' * 4) + shade('{') + label + shade('}') + t.black(u'·' * (t.width - (6+len(label)))))
+            sys.stderr.write(t.black(u'·' * 4) + shade('{') + label + shade('}') + t.black(u'·' * (t.width - (6+len(label)) - 1)) + '\n')
         else:
-            sys.stderr.write(t.black(u'·' * (t.width)))
+            sys.stderr.write(t.black(u'·' * (t.width-1) + '\n'))
 
 
     def writeln(self, s):
@@ -88,6 +88,7 @@ class Log(Transform):
             self.writehr(self.lineno)
             self.writeln(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter))
             self.writehr()
+            sys.stderr.write('\n')
         yield hash
 
 class Stop(Transform):
