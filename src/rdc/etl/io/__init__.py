@@ -100,7 +100,16 @@ class IWritable:
 class InputMultiplexer(IReadable):
     def __init__(self, channels):
         self.queues = dict([(channel, Input()) for channel in channels])
+        self._stats = dict([(channel, 0) for channel in channels])
         self._plugged = set()
+
+    @property
+    def stats(self):
+        return ((CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in self._stats.iteritems())
+
+    @property
+    def stats_str(self):
+        return ' '.join(('{channel}={lines}'.format(channel=channel, lines=lines) for channel, lines in self.stats if lines > 0))
 
     def get(self, block=True, timeout=True):
         """Gets a (data, channel) tuple from the first queue ready for it.
@@ -111,6 +120,11 @@ class InputMultiplexer(IReadable):
                 if queue.alive and not queue.empty():
                     # xxx useage of block/timeout here is wrong
                     data = queue.get(block, timeout)
+
+                    # increment stat counter
+                    if not isinstance(data, Token):
+                        self._stats[id] += 1
+
                     return data, id
 
             # todo xxx take block and timeout into account
@@ -146,12 +160,25 @@ class InputMultiplexer(IReadable):
 class OutputDemultiplexer(IWritable):
     def __init__(self, channels):
         self.channels = dict([(channel, []) for channel in channels])
+        self._stats = dict([(channel, 0) for channel in channels])
+
+    @property
+    def stats(self):
+        return ((CHANNEL_NAMES[OUTPUT_TYPE][channel], stat) for channel, stat in self._stats.iteritems())
+
+    @property
+    def stats_str(self):
+        return ' '.join(('{channel}={lines}'.format(channel=channel, lines=lines) for channel, lines in self.stats if lines > 0))
 
     def put(self, data, block=True, timeout=None):
         data, channel = self.__demux(data)
 
         if not channel in self.channels:
             raise IOError('Unknown channel %r.' % (channel, ))
+
+        # increment stat counter
+        if not isinstance(data, Token):
+            self._stats[channel] += 1
 
         for target in self.channels[channel]:
             target.put(isinstance(data, Token) and data or copy(data), block, timeout)
@@ -166,6 +193,7 @@ class OutputDemultiplexer(IWritable):
         if target in self.channels[channel]:
             raise ValueError('Channel already have this target plugged for channel %r.' % (channel, ))
         self.channels[channel].append(target)
+
 
     def __getitem__(self, item):
         if not item in self.channels:
@@ -183,9 +211,9 @@ class OutputDemultiplexer(IWritable):
 
 
 class Input(Queue, IReadable, IWritable):
-
     def __init__(self, maxsize=BUFFER_SIZE):
         Queue.__init__(self, maxsize)
+
         self._runlevel = 0
         self._writable_runlevel = 0
 
@@ -218,7 +246,6 @@ class Input(Queue, IReadable, IWritable):
             return self.get(block, timeout)
 
         return data
-
 
     def empty(self):
         self.mutex.acquire()

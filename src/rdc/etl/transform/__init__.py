@@ -73,9 +73,6 @@ class Transform(ITransform):
         self.INPUT_CHANNELS = input_channels or self.INPUT_CHANNELS
         self.OUTPUT_CHANNELS = output_channels or self.OUTPUT_CHANNELS
 
-        self._s_in = 0
-        self._s_out = 0
-
         self._input = InputMultiplexer(self.INPUT_CHANNELS)
         self._output = OutputDemultiplexer(self.OUTPUT_CHANNELS)
 
@@ -116,7 +113,6 @@ class Transform(ITransform):
         try:
             # Pull data from the first available input channel (blocking)
             data, channel = self._input.get()
-            self._s_in += 1
             # Execute actual transformation
             self.__execute_and_handle_output(self.transform, data, channel)
         finally:
@@ -154,14 +150,8 @@ class Transform(ITransform):
     def __name__(self, value):
         self._name = value
 
-    def get_stats(self):
-        return OrderedDict((
-            ('in', self._s_in),
-            ('out', self._s_out),
-        ))
-
     def get_stats_as_string(self):
-        return ' '.join(['%s=%d' % (k, v) for k, v in self.get_stats().items()])
+        return ' '.join((self._input.stats_str, self._output.stats_str))
 
     def __repr__(self):
         return '<' + self.__name__ + ' ' + self.get_stats_as_string() + '>'
@@ -176,10 +166,8 @@ class Transform(ITransform):
         if isinstance(results, types.GeneratorType):
             for data in results:
                 # todo better stats
-                self._s_out += 1
                 self._output.put(data)
         elif results is not None:
-            self._s_out += 1
             self._output.put(results)
 
 
