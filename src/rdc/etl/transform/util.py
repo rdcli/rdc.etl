@@ -91,6 +91,31 @@ class Log(Transform):
             sys.stderr.write('\n')
         yield hash
 
+class Limit(Transform):
+    """Only pass the first `limit` input lines to default output.
+
+    Args:
+      limit (int): Number of line after which to stop passing input lines to the output.
+
+    """
+
+    limit = 0
+
+    def __init__(self, limit = None):
+        super(Limit, self).__init__()
+
+        self.limit = limit or self.limit
+
+    def initialize(self):
+        super(Limit, self).initialize()
+        self._current = 0
+
+    def transform(self, hash, channel=STDIN):
+        self._current += 1
+
+        if self.limit and self._current <= self.limit:
+            yield hash
+
 class Stop(Transform):
     """Sinker transform that stops anything through the pipes.
 
