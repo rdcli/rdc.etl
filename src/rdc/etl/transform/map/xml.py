@@ -17,10 +17,10 @@
 from __future__ import absolute_import
 from copy import copy
 from inspect import isgenerator
-from xml.etree import ElementTree
 from rdc.etl.error import AbstractError
 from rdc.etl.hash import Hash
 from rdc.etl.transform.map import Map
+from rdc.etl.util import etree
 
 
 class XmlMap(Map):
@@ -60,7 +60,7 @@ class XmlMap(Map):
         self.field = field or self.field
 
     def map(self, value):
-        items = ElementTree.fromstring(value)
+        items = etree.fromstring(value)
 
         if self.xpath:
             items = items.findall(self.xpath)

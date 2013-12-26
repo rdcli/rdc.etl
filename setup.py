@@ -71,17 +71,14 @@ setup(name='rdc.etl',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-        # todo: most of the deps are optional and depends on what we wanna
-        # actually use, make it so nothing is required, but still travis
-        # install the needed ones and an exception is raised when one tries to
-        # use a component with a dependency without having it installed first.
-        'BeautifulSoup',
-        'requests',
-        'unidecode',
-        'webob',
-        'webapp2',
-        'sqlalchemy',
-        'blessings',
+        'lxml',          # XML Processing
+        'BeautifulSoup', 
+        'requests',      # HTTP without headaches
+        'unidecode',     # Transcoding
+        'webob',         # Webapp2 dependency
+        'webapp2',       # Basic web tools
+        'sqlalchemy',    # DBAL
+        'blessings',     # Readable console & tty detection
       ],
       entry_points="""
       # -*- Entry points: -*-

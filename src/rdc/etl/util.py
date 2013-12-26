@@ -24,6 +24,7 @@ import unidecode
 from BeautifulSoup import BeautifulSoup
 from blessings import Terminal as _Terminal
 from datetime import datetime
+from lxml import etree
 from webapp2 import cached_property
 
 VALID_HTML_TAGS = ['br']
@@ -226,9 +227,11 @@ def create_file_reader(path):
 
     return file_reader
 
+# Exports
 terminal = _Terminal()
 html_escape = cgi.escape
 html_unescape = HTMLParser.HTMLParser().unescape
 now = datetime.now
 cached_property = cached_property
+etree = etree
 
