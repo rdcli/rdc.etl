@@ -227,6 +227,13 @@ def create_file_reader(path):
 
     return file_reader
 
+def sfloat(mixed, default=None):
+    """Safe float cast."""
+    try:
+        return float(mixed)
+    except:
+        return default
+
 # Exports
 terminal = _Terminal()
 html_escape = cgi.escape

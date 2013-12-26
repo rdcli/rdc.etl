@@ -82,6 +82,3 @@ class Hash(OrderedDict):
         finally:
             del _repr_running[call_key]
 
-def H(*args):
-    return Hash(args)
-

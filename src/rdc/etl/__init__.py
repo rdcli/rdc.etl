@@ -24,3 +24,9 @@ except ImportError:
 
 __version__ = '1.0.0a4'
 
+from rdc.etl.hash import Hash
+
+def H(*args):
+    """Builds a hash from a list of pairs."""
+    return Hash(args)
+

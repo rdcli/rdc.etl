@@ -45,7 +45,7 @@ class XmlMap(Map):
 
     .. attribute:: xpath
 
-        Not used yet (TODO)
+        XPath used to select items before running them through item_map().
 
     """
 
@@ -60,6 +60,9 @@ class XmlMap(Map):
         self.field = field or self.field
 
     def map(self, value):
+        """Generator that yields mapped items.
+
+        """
         items = etree.fromstring(value)
 
         if self.xpath:
@@ -81,6 +84,9 @@ class XmlMap(Map):
                     ))
 
     def map_item(self, item):
+        """Convert one matched XML item to a dictionary.
+
+        """
         raise AbstractError(self.map_item)
 
 

@@ -19,8 +19,9 @@ import types
 from abc import ABCMeta, abstractmethod
 # todo make this python2.6 compatible
 from collections import OrderedDict
+from rdc.etl import H
 from rdc.etl.error import AbstractError
-from rdc.etl.hash import Hash, H
+from rdc.etl.hash import Hash
 from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End, STDOUT2, STDIN2
 
 
