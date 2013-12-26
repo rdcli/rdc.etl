@@ -1,4 +1,8 @@
-.PHONY: clean doc remote_doc test
+PYTHON=$(shell which python)
+.PHONY: clean doc remote_doc test develop
+
+develop:
+	$(PYTHON) setup.py develop
 
 doc:
 	(cd doc; make html)
