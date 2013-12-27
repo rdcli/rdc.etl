@@ -58,7 +58,7 @@ class Filter(Transform):
         if not self.filter or not callable(self.filter):
             raise RuntimeError('No callable provided to ' + self.__class__.__name__ + '.')
 
-        if self.filter(hash, channel=STDIN):
+        if self.filter(hash, channel):
             yield hash
 
 
