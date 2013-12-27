@@ -36,7 +36,7 @@ class Filter(Transform):
         >>> from rdc.etl.hash import Hash
 
         >>> @Filter
-        ... def my_filter(hash):
+        ... def my_filter(hash, channel):
         ...     return hash['keepme'] == True
 
         >>> list(my_filter(

@@ -28,7 +28,7 @@ INPUT_DATA = (
 class TransformFilterTestCase(BaseTestCase):
     def test_base_class_decorator(self):
         @Filter
-        def my_filter(hash):
+        def my_filter(hash, channel):
             return hash['keepme'] == True
 
         out = my_filter(*INPUT_DATA)
