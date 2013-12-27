@@ -161,13 +161,14 @@ class DatabaseLoad(Transform):
             else:
                 if self.created_at_field in hash:
                     del hash[self.created_at_field]
-            _keys = self.get_columns_for(hash)
+
+            _columns = self.get_columns_for(hash)
             query = '''INSERT INTO {table} ({keys}) VALUES ({values})'''.format(
                 table=self.table_name,
-                keys=', '.join(_keys),
-                values=', '.join(['%s'] * len(_keys))
+                keys=', '.join(_columns),
+                values=', '.join(['%s'] * len(_columns))
             )
-            values = (hash[key] for key in _keys)
+            values = [hash[key] for key in _columns]
 
         # Execute
         self.connection.execute(query, values)
