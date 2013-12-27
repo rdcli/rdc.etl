@@ -42,6 +42,7 @@ class DatabaseLoad(Transform):
         self.engine = engine or self.engine
         self.table_name = table_name or self.table_name
 
+        # xxx should take self.fetch_columns into account if provided
         self.fetch_columns = {}
         if isinstance(fetch_columns, list):
             self.add_fetch_column(*fetch_columns)
@@ -80,21 +81,21 @@ class DatabaseLoad(Transform):
         """List of columns we can use for insert."""
         return self.columns
 
-    def get_update_columns_for(self, hash):
+    def get_update_columns_for(self, hash, row):
         """List of columns we can use for update."""
         return [
             column for column in self.columns
             if not column in self.insert_only_fields
         ]
 
-    def get_columns_for(self, hash, insert=False):
+    def get_columns_for(self, hash, row=None):
         """Retrieve list of table column names for which we have a value in given hash.
 
         """
-        if insert:
-            column_names = self.get_insert_columns_for(hash)
+        if row:
+            column_names = self.get_update_columns_for(hash, row)
         else:
-            column_names = self.get_update_columns_for(hash)
+            column_names = self.get_insert_columns_for(hash)
 
         return [key for key in hash if key in column_names]
 
@@ -138,7 +139,7 @@ class DatabaseLoad(Transform):
 
         # UPDATE
         if row:
-            _columns = self.get_columns_for(hash, insert=False)
+            _columns = self.get_columns_for(hash, row)
 
             query = '''UPDATE {table} SET {values} WHERE {criteria}'''.format(
                 table=self.table_name,
@@ -150,7 +151,8 @@ class DatabaseLoad(Transform):
                     '{key} = %s'.format(key=_key) for _key in self.discriminant
                 ))
             )
-            values = [hash[_column] for _column in _columns if not _column in self.discriminant] + [hash[_column] for _columns in self.discriminant]
+            values = [hash[_column] for _column in _columns if not _column in self.discriminant] + \
+                     [hash[_column] for _column in self.discriminant]
 
         # INSERT
         else:
@@ -159,11 +161,11 @@ class DatabaseLoad(Transform):
             else:
                 if self.created_at_field in hash:
                     del hash[self.created_at_field]
-            _keys = self.get_columns_for(hash, insert=True)
+            _keys = self.get_columns_for(hash)
             query = '''INSERT INTO {table} ({keys}) VALUES ({values})'''.format(
                 table=self.table_name,
                 keys=', '.join(_keys),
-                values=', '.join(['%s']*len(_keys))
+                values=', '.join(['%s'] * len(_keys))
             )
             values = (hash[key] for key in _keys)
 
