@@ -18,6 +18,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from copy import copy
 from Queue import Queue
+import itertools
 from rdc.etl.error import AbstractError, InactiveReadableError, InactiveWritableError
 from rdc.etl.hash import Hash
 
@@ -31,6 +32,8 @@ STDOUT = 0
 STDERR = -1
 STDOUT2 = 1
 STDOUT3 = 2
+INSERT = 10
+UPDATE = 11
 
 # Default channels
 DEFAULT_INPUT_CHANNEL = STDIN
@@ -52,6 +55,8 @@ CHANNEL_NAMES = {
         STDERR: 'err',
         STDOUT2: 'out2',
         STDOUT3: 'out3',
+        INSERT: 'insert',
+        UPDATE: 'update',
     },
 }
 
@@ -161,10 +166,13 @@ class OutputDemultiplexer(IWritable):
     def __init__(self, channels):
         self.channels = dict([(channel, []) for channel in channels])
         self._stats = dict([(channel, 0) for channel in channels])
+        self._special_stats = dict()
 
     @property
     def stats(self):
-        return ((CHANNEL_NAMES[OUTPUT_TYPE][channel], stat) for channel, stat in self._stats.iteritems())
+        return (
+            (CHANNEL_NAMES[OUTPUT_TYPE][channel], stat) for channel, stat in itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
+        )
 
     @property
     def stats_str(self):

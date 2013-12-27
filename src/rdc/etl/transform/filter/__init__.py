@@ -13,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
@@ -45,17 +47,18 @@ class Filter(Transform):
 
     """
 
-    filter = None
-
     def __init__(self, filter=None):
         super(SimpleFilter, self).__init__()
         self.filter = filter or self.filter
+
+    def filter(self, hash, channel=STDIN):
+        raise AbstractError(self.filter)
 
     def transform(self, hash, channel=STDIN):
         if not self.filter or not callable(self.filter):
             raise RuntimeError('No callable provided to ' + self.__class__.__name__ + '.')
 
-        if self.filter(hash):
+        if self.filter(hash, channel=STDIN):
             yield hash
 
 
