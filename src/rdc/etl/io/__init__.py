@@ -26,6 +26,7 @@ from rdc.etl.hash import Hash
 STDIN = 0
 STDIN2 = 1
 STDIN3 = 2
+SELECT = 10
 
 # Output channels
 STDOUT = 0
@@ -49,6 +50,7 @@ CHANNEL_NAMES = {
         STDIN: 'in',
         STDIN2: 'in2',
         STDIN3: 'in3',
+        SELECT: 'select'
     },
     OUTPUT_TYPE: {
         STDOUT: 'out',
@@ -106,11 +108,14 @@ class InputMultiplexer(IReadable):
     def __init__(self, channels):
         self.queues = dict([(channel, Input()) for channel in channels])
         self._stats = dict([(channel, 0) for channel in channels])
+        self._special_stats = dict()
         self._plugged = set()
 
     @property
     def stats(self):
-        return ((CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in self._stats.iteritems())
+        return (
+            (CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
+        )
 
     @property
     def stats_str(self):

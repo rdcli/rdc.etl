@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rdc.etl.io import STDIN, STDOUT, INSERT, UPDATE
+from rdc.etl.io import STDIN, STDOUT, INSERT, UPDATE, SELECT
 from sqlalchemy import MetaData, Table
 from rdc.etl.transform import Transform
 from rdc.etl.util import now, cached_property
@@ -104,11 +104,16 @@ class DatabaseLoad(Transform):
             criteria=' AND '.join([key_atom + ' = %s' for key_atom in self.discriminant]),
         )
         rp = (connection or self.connection).execute(query, [dataset.get(key_atom) for key_atom in self.discriminant])
+
+        # Increment stats
+        self._input._special_stats[SELECT] += 1
+
         return rp.fetchone()
 
     def initialize(self):
         super(DatabaseLoad, self).initialize()
 
+        self._input._special_stats[SELECT] = 0
         self._output._special_stats[INSERT] = 0
         self._output._special_stats[UPDATE] = 0
 
@@ -146,7 +151,6 @@ class DatabaseLoad(Transform):
                 ))
             )
             values = [hash[_column] for _column in _columns if not _column in self.discriminant] + [hash[_column] for _columns in self.discriminant]
-            self._output._special_stats[UPDATE] += 1
 
         # INSERT
         else:
@@ -162,10 +166,16 @@ class DatabaseLoad(Transform):
                 values=', '.join(['%s']*len(_keys))
             )
             values = (hash[key] for key in _keys)
-            self._output._special_stats[INSERT] += 1
 
         # Execute
         self.connection.execute(query, values)
+
+        # Increment stats
+        if row:
+            self._output._special_stats[UPDATE] += 1
+        else:
+            self._output._special_stats[INSERT] += 1
+
 
         # If user required us to fetch some columns, let's query again to get their actual values.
         if self.fetch_columns and len(self.fetch_columns):
@@ -174,7 +184,7 @@ class DatabaseLoad(Transform):
             if not row:
                 raise ValueError('Could not find matching row after load.')
 
-            for alias, column in self.fetch_columns.items():
+            for alias, column in self.fetch_columns.iteritems():
                 hash[alias] = row[column]
 
         return hash
