@@ -17,7 +17,7 @@
 import time
 from threading import Thread
 import traceback
-from rdc.etl.harness import AbstractHarness
+from rdc.etl.harness import BaseHarness
 from rdc.etl.hash import Hash
 from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
 from rdc.etl.transform import Transform
@@ -76,11 +76,12 @@ class TransformThread(Thread):
         return (self.is_alive() and '+' or '-') + ' ' + self.name + ' ' + self.transform.get_stats_as_string()
 
 
-class ThreadedHarness(AbstractHarness):
+class ThreadedHarness(BaseHarness):
     """Builder for ETL job python callables, using threads for parallelization."""
 
     def __init__(self):
         super(ThreadedHarness, self).__init__()
+        self.status = []
         self._transforms = {}
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
@@ -119,6 +120,7 @@ class ThreadedHarness(AbstractHarness):
         for id, thread in self._threads.items():
             thread.start()
 
+        # run initialization methods for statuses
         for status in self.status:
             status.initialize(self)
 
@@ -140,6 +142,7 @@ class ThreadedHarness(AbstractHarness):
             # threads finished.
             time.sleep(0.2)
 
+        # run finalization methods for statuses
         for status in self.status:
             status.finalize(self)
 

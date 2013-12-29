@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rdc.etl.io import STDIN, STDOUT, INSERT, UPDATE, SELECT
 from sqlalchemy import MetaData, Table
+from rdc.etl.io import STDIN, STDOUT, INSERT, UPDATE, SELECT
 from rdc.etl.transform import Transform
 from rdc.etl.util import now, cached_property
 

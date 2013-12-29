@@ -42,17 +42,7 @@ class IHarness:
         raise AbstractError(self.loop)
 
 
-class AbstractHarness(IHarness):
-    """
-    is 99.9% chances you want to extend this or a subclass of this.
-
-    """
-
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        self.status = []
-
+class BaseHarness(IHarness):
     def initialize(self):
         pass
 

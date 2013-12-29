@@ -14,23 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, os, platform
-from rdc.etl.status import IStatus
+from rdc.etl.status import BaseStatus
 from rdc.etl.util import terminal as t
 
 
-def has_ansi_support(handle=None):
-    handle = handle or sys.stdout
-    if (hasattr(handle, "isatty") and handle.isatty()) or \
-            ('TERM' in os.environ and os.environ['TERM'] == 'ANSI'):
-        if platform.system() == 'Windows' and not ('TERM' in os.environ and os.environ['TERM'] == 'ANSI'):
-            return False
-        else:
-            return True
-    return False
-
-
-class ConsoleStatus(IStatus):
+class ConsoleStatus(BaseStatus):
     """
     Outputs status information to the connected stdout. Can be a TTY, with or without support for colors/cursor
     movements, or a non tty (pipe, file, ...). The features are adapted to terminal capabilities.
@@ -41,19 +29,12 @@ class ConsoleStatus(IStatus):
 
     """
     def __init__(self, prefix=''):
-        self.ansi = has_ansi_support()
         self.prefix = prefix
-
-    def initialize(self, harness):
-        pass
 
     def update(self, harness):
         threads = harness._threads.items()
         if t.is_a_tty:
             self.write(threads, prefix=self.prefix)
-
-    def finalize(self, harness):
-        pass
 
     @staticmethod
     def write(threads, prefix='', rewind=True):

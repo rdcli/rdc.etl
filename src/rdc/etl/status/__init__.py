@@ -19,10 +19,32 @@ from rdc.etl.error import AbstractError
 
 
 class IStatus:
-
     __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def initialize(self, harness):
+        """Initialize status."""
+        raise AbstractError(self.initialize)
 
     @abstractmethod
     def update(self, harness):
         """update this status"""
         raise AbstractError(self.update)
+
+    @abstractmethod
+    def finalize(self, harness):
+        """Finalize status."""
+        raise AbstractError(self.finalize)
+
+
+class BaseStatus(IStatus):
+    def initialize(self, harness):
+        pass
+
+    def update(self, harness):
+        raise AbstractError(self.update)
+
+    def finalize(self, harness):
+        pass
+
+
