@@ -2,7 +2,7 @@
 import time
 
 from rdc.etl.harness.threaded import ThreadedHarness
-from rdc.etl.contrib.example import build_producer, run, build_simple_transform
+from rdc.etl.contrib.example import build_producer, run
 from rdc.etl.status.http import HttpStatus
 from rdc.etl.transform import Transform
 

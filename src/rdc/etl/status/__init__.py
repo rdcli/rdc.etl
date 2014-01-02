@@ -22,29 +22,29 @@ class IStatus:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def initialize(self, harness):
+    def initialize(self, harness, debug, profile):
         """Initialize status."""
         raise AbstractError(self.initialize)
 
     @abstractmethod
-    def update(self, harness):
+    def update(self, harness, debug, profile):
         """update this status"""
         raise AbstractError(self.update)
 
     @abstractmethod
-    def finalize(self, harness):
+    def finalize(self, harness, debug, profile):
         """Finalize status."""
         raise AbstractError(self.finalize)
 
 
 class BaseStatus(IStatus):
-    def initialize(self, harness):
+    def initialize(self, harness, debug, profile):
         pass
 
-    def update(self, harness):
+    def update(self, harness, debug, profile):
         raise AbstractError(self.update)
 
-    def finalize(self, harness):
+    def finalize(self, harness, debug, profile):
         pass
 
 

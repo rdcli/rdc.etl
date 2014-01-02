@@ -13,10 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import copy
 
 import sys
+from rdc.etl.error import AbstractError
 from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN
+from rdc.etl.io import STDIN, STDOUT, STDIN2, STDOUT2
 from rdc.etl.transform import Transform
 from rdc.etl.util import terminal as t
 
@@ -31,8 +33,9 @@ class Log(Transform):
 
     field_filter = None
     condition = None
+    clean = False
 
-    def __init__(self, field_filter=None, condition=None):
+    def __init__(self, field_filter=None, condition=None, clean=None):
         """Initializes the Log transform. Usually, no
 
         :param field_filter:
@@ -45,6 +48,7 @@ class Log(Transform):
 
         self.field_filter = field_filter or self.field_filter
         self.condition = condition or self.condition
+        self.clean = clean or self.clean
 
     def format(self, s):
         """Row formater."""
@@ -85,8 +89,12 @@ class Log(Transform):
         """Actual transformation."""
         self.lineno += 1
         if not self.condition or self.condition(hash):
+            hash = hash.copy()
+            hash = hash if not callable(self.field_filter) else hash.restrict(self.field_filter)
+            if self.clean:
+                hash = hash.restrict(lambda k: len(k) and k[0] != '_')
             self.writehr(self.lineno)
-            self.writeln(hash if not callable(self.field_filter) else hash.copy().restrict(self.field_filter))
+            self.writeln(hash)
             self.writehr()
             sys.stderr.write('\n')
         yield hash
@@ -154,3 +162,30 @@ class Clean(Transform):
     def transform(self, hash, channel=STDIN):
         yield clean(hash)
 
+
+class Validate(Transform):
+    """An identity transform (input is passed to output unchanged). Aims for data validation."""
+
+    CHANNEL_MAP = {
+        STDIN: STDOUT,
+        STDIN2: STDOUT2,
+    }
+
+    def __init__(self, validate=None):
+        # Use the callable name if provided
+        if validate and not self._name:
+            self._name = validate.__name__
+
+        # Parent constructor
+        super(Validate, self).__init__()
+
+        self.validate = validate or self.validate
+
+
+    def validate(self, hash, channel=STDIN):
+        raise AbstractError(self.validate)
+
+    def transform(self, hash, channel=STDIN):
+        # TODO instead of a copy, pass a "ReadOnly" decorated hash.
+        self.validate(copy(hash), channel)
+        yield hash, self.CHANNEL_MAP[STDIN]

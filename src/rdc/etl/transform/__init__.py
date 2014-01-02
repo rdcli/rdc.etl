@@ -13,16 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import copy
 
+import itertools
 import types
 from abc import ABCMeta, abstractmethod
-# todo make this python2.6 compatible
-from collections import OrderedDict
 from rdc.etl import H
 from rdc.etl.error import AbstractError
 from rdc.etl.hash import Hash
-from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End, STDOUT2, STDIN2
+from rdc.etl.io import STDIN, STDOUT, STDERR, InputMultiplexer, OutputDemultiplexer, End
+from rdc.etl.stat import Statisticable
+from rdc.etl.util import Timer
 
 
 class ITransform:
@@ -35,7 +35,8 @@ class ITransform:
         prototype."""
         raise AbstractError(self.transform)
 
-class Transform(ITransform):
+
+class Transform(ITransform, Statisticable):
     """Base class and decorator for transformations.
 
     .. automethod:: transform
@@ -76,6 +77,8 @@ class Transform(ITransform):
 
         self._input = InputMultiplexer(self.INPUT_CHANNELS)
         self._output = OutputDemultiplexer(self.OUTPUT_CHANNELS)
+        self._exec_time = 0.0
+        self._exec_count = 0
 
         self._booted = False
         self._initialized = False
@@ -151,52 +154,56 @@ class Transform(ITransform):
     def __name__(self, value):
         self._name = value
 
-    def get_stats_as_string(self):
-        return ' '.join((self._input.stats_str, self._output.stats_str))
+    def get_local_stats(self, debug=False, profile=False):
+        if profile:
+            return (
+                (u'τ', '%.2fs' % (self._exec_time, ), ),
+                (u'ε', self._exec_count, ),
+                (u'τ.ε⁻¹', ((self._exec_count > 0) and (u'%.1fms' % (1000 * self._exec_time / self._exec_count, )) or u'∞'), ),
+                (u'ε.τ⁻¹', ((self._exec_time > 0) and (u'%.1f/s' % (self._exec_count / self._exec_time, )) or u'∞'), ),
+            )
+        return ()
+
+    def get_stats(self, debug=False, profile=False):
+        stats = itertools.chain(
+            self._input.stats,
+            self._output.stats,
+            self.get_local_stats(debug=debug, profile=profile)
+        )
+        return (
+            (name, stat, ) for name, stat in stats
+        )
+
 
     def __repr__(self):
-        return '<' + self.__name__ + ' ' + self.get_stats_as_string() + '>'
+        return u'<{0} {1}>'.format(self.__name__, self.get_unicode_stats())
 
     # Private
-
     def __execute_and_handle_output(self, callable, *args, **kwargs):
         """Runs a transformation callable with given args/kwargs and flush the result into the right
         output channel."""
-        results = callable(*args, **kwargs)
+
+        timer = Timer()
+        with timer:
+            results = callable(*args, **kwargs)
+        self._exec_time += timer.duration
+
         # Put data onto output channels
         if isinstance(results, types.GeneratorType):
-            for data in results:
-                # todo better stats
-                self._output.put(data)
+            while True:
+                timer = Timer()
+                with timer:
+                    try:
+                        result = results.next()
+                    except StopIteration as e:
+                        break
+                self._exec_time += timer.duration
+                self._exec_count += 1
+                self._output.put(result)
         elif results is not None:
+            self._exec_count += 1
             self._output.put(results)
-
-
-class Validate(Transform):
-    """An identity transform (input is passed to output unchanged). Aims for data validation."""
-
-    CHANNEL_MAP = {
-        STDIN: STDOUT,
-        STDIN2: STDOUT2,
-    }
-
-    def __init__(self, validate=None):
-        # Use the callable name if provided
-        if validate and not self._name:
-            self._name = validate.__name__
-
-        # Parent constructor
-        super(Validate, self).__init__()
-
-        self.validate = validate or self.validate
-
-
-    def validate(self, hash, channel=STDIN):
-        raise AbstractError(self.validate)
-
-    def transform(self, hash, channel=STDIN):
-        # TODO instead of a copy, pass a "ReadOnly" decorated hash.
-        self.validate(copy(hash), channel)
-        yield hash, self.CHANNEL_MAP[STDIN]
+        else:
+            self._exec_count += 1
 
 

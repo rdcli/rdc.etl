@@ -79,6 +79,8 @@ setup(name='rdc.etl',
         'webapp2',       # Basic web tools
         'sqlalchemy',    # DBAL
         'blessings',     # Readable console & tty detection
+        'psutil',        # memory consumption
+        'repoze.lru',    # lru_cache for python 2.6+
       ],
       entry_points="""
       # -*- Entry points: -*-

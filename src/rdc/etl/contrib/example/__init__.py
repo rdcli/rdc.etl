@@ -14,10 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pprint
+from functools import partial
 from rdc.etl.transform.extract import Extract
 from rdc.etl.transform.simple import SimpleTransform
-from rdc.etl.harness.threaded import ThreadedHarness as Harness
+from rdc.etl.harness.threaded import ThreadedHarness
+from rdc.etl.util import terminal as t
+
+Harness = partial(ThreadedHarness, debug=True, profile=True)
 
 def _get_value(id):
     return 'Value for %d' % (id, )
@@ -33,10 +36,8 @@ def build_simple_transform(f='upper'):
 def run(harness):
     print
     retval = harness()
-    print
-    print 'Transformations (with post execution state):'
-    print '\n'.join(['  %s' % line for line in pprint.pformat(harness._transforms).split('\n')])
-    print '  -> return ', retval
+    print ' `-> {0}: {1}'.format(t.bold(t.white('Return')), retval)
     print
 
 __all__ = [build_producer, build_simple_transform, run, Harness, ]
+

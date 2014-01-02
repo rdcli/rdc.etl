@@ -23,6 +23,8 @@ from rdc.etl.error import AbstractError, InactiveReadableError, InactiveWritable
 from rdc.etl.hash import Hash
 
 # Input channels
+from rdc.etl.stat import Statisticable
+
 STDIN = 0
 STDIN2 = 1
 STDIN3 = 2
@@ -43,6 +45,7 @@ DEFAULT_OUTPUT_CHANNEL = STDOUT
 # Types
 INPUT_TYPE = 'input'
 OUTPUT_TYPE = 'output'
+OTHER_TYPE = 'other'
 
 # Human friendly channel names
 CHANNEL_NAMES = {
@@ -104,22 +107,18 @@ class IWritable:
         raise AbstractError(self.put)
 
 
-class InputMultiplexer(IReadable):
+class InputMultiplexer(IReadable, Statisticable):
     def __init__(self, channels):
         self.queues = dict([(channel, Input()) for channel in channels])
-        self._stats = dict([(channel, 0) for channel in channels])
-        self._special_stats = dict()
         self._plugged = set()
 
-    @property
-    def stats(self):
-        return (
-            (CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
-        )
+        # statistic related
+        self._stats = dict([(channel, 0) for channel in channels])
+        self._special_stats = dict()
 
-    @property
-    def stats_str(self):
-        return ' '.join(('{channel}={lines}'.format(channel=channel, lines=lines) for channel, lines in self.stats if lines > 0))
+    def get_stats(self, debug=False, profile=False):
+        stats = itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
+        return ((CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in stats)
 
     def get(self, block=True, timeout=True):
         """Gets a (data, channel) tuple from the first queue ready for it.
@@ -167,21 +166,17 @@ class InputMultiplexer(IReadable):
         return [queue for channel, queue in self.queues.items() if channel not in self._plugged]
 
 
-class OutputDemultiplexer(IWritable):
+class OutputDemultiplexer(IWritable, Statisticable):
     def __init__(self, channels):
         self.channels = dict([(channel, []) for channel in channels])
+
+        # statistic related
         self._stats = dict([(channel, 0) for channel in channels])
         self._special_stats = dict()
 
-    @property
-    def stats(self):
-        return (
-            (CHANNEL_NAMES[OUTPUT_TYPE][channel], stat) for channel, stat in itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
-        )
-
-    @property
-    def stats_str(self):
-        return ' '.join(('{channel}={lines}'.format(channel=channel, lines=lines) for channel, lines in self.stats if lines > 0))
+    def get_stats(self, debug=False, profile=False):
+        stats = itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
+        return ((CHANNEL_NAMES[OUTPUT_TYPE][channel], stat) for channel, stat in stats)
 
     def put(self, data, block=True, timeout=None):
         data, channel = self.__demux(data)

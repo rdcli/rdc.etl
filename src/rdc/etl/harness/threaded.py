@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2012-2014 Romain Dorgueil
+# copyright 2012-2014 romain dorgueil
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# licensed under the apache license, version 2.0 (the "license");
+# you may not use this file except in compliance with the license.
+# you may obtain a copy of the license at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/license-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# unless required by applicable law or agreed to in writing, software
+# distributed under the license is distributed on an "as is" basis,
+# without warranties or conditions of any kind, either express or implied.
+# see the license for the specific language governing permissions and
+# limitations under the license.
 
+import datetime
 import time
-from threading import Thread
 import traceback
-from rdc.etl.harness import BaseHarness
+from threading import Thread
+from rdc.etl.harness.base import BaseHarness
 from rdc.etl.hash import Hash
 from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
 from rdc.etl.transform import Transform
@@ -79,20 +80,28 @@ class TransformThread(Thread):
 class ThreadedHarness(BaseHarness):
     """Builder for ETL job python callables, using threads for parallelization."""
 
-    def __init__(self):
+    def __init__(self, debug=False, profile=False):
         super(ThreadedHarness, self).__init__()
+        self.debug = debug
+        self.profile = profile
         self.status = []
         self._transforms = {}
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
+        self._started_at = None
+        self._finished_at = None
+
+    def __call__(self):
+        self._started_at = datetime.datetime.now()
+        result = super(ThreadedHarness, self).__call__()
+        self._finished_at = datetime.datetime.now()
+        return result
 
     def get_threads(self):
-        for id, thread in self._threads.items():
-            yield id, thread
+        return self._threads.items()
 
     def get_transforms(self):
-        for id, transform in self._transforms.items():
-            yield id, transform
+        return self._transforms.items()
 
     def add(self, transform):
         """Register a transformation, create a thread object to manage its future lifecycle."""
@@ -122,7 +131,7 @@ class ThreadedHarness(BaseHarness):
 
         # run initialization methods for statuses
         for status in self.status:
-            status.initialize(self)
+            status.initialize(self, debug=self.debug, profile=self.profile)
 
         # main loop until all threads are done
         while True:
@@ -132,7 +141,7 @@ class ThreadedHarness(BaseHarness):
 
             # communicate with the world
             for status in self.status:
-                status.update(self)
+                status.update(self, debug=self.debug, profile=self.profile)
 
             # exit point
             if not is_alive:
@@ -144,7 +153,7 @@ class ThreadedHarness(BaseHarness):
 
         # run finalization methods for statuses
         for status in self.status:
-            status.finalize(self)
+            status.finalize(self, debug=self.debug, profile=self.profile)
 
         # Wait for all transform threads to die
         for id, thread in self._threads.items():

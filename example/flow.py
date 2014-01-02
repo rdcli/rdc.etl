@@ -16,6 +16,7 @@
 
 from rdc.etl.contrib.example import Harness, build_producer, run
 from rdc.etl.io import STDIN, STDIN2
+from rdc.etl.status.console import ConsoleStatus
 from rdc.etl.transform.flow.sort import Sort
 from rdc.etl.transform.flow.sortedjoin import SortedJoin
 from rdc.etl.transform.util import Log
@@ -27,6 +28,7 @@ print
 print('Producer -> Sort -> Log')
 
 h = Harness()
+h.status.append(ConsoleStatus())
 p1 = build_producer('Producer 1')
 h.add_chain(p1, Sort(key=('id',)), Log())
 run(h)
@@ -39,6 +41,7 @@ print("Producer1 -> Sort -(stdin)---> SortedJoin --> Log")
 print("Producer2 -> Sort -(stdin2)-'")
 
 h = Harness()
+h.status.append(ConsoleStatus())
 p1 = build_producer('Producer 1')
 p2 = build_producer('Producer 2', get_value=lambda id: int(id) * 42, value_name='price')
 sj = SortedJoin(key=('id', ))
