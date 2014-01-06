@@ -58,6 +58,9 @@ class TransformThread(Thread):
         while True:
             try:
                 self.transform.step()
+            except KeyboardInterrupt as e:
+                # todo send signal to harness, clean stop required. Needed ? read about threads and interrupt, only main may receive this.
+                break
             except InactiveReadableError, e:
                 # Terminated, exit loop.
                 break
@@ -135,21 +138,25 @@ class ThreadedHarness(BaseHarness):
 
         # main loop until all threads are done
         while True:
-            is_alive = False
-            for id, thread in self._threads.items():
-                is_alive = is_alive or thread.is_alive()
+            try:
+                is_alive = False
+                for id, thread in self._threads.items():
+                    is_alive = is_alive or thread.is_alive()
 
-            # communicate with the world
-            for status in self.status:
-                status.update(self, debug=self.debug, profile=self.profile)
+                # communicate with the world
+                for status in self.status:
+                    status.update(self, debug=self.debug, profile=self.profile)
 
-            # exit point
-            if not is_alive:
+                # exit point
+                if not is_alive:
+                    break
+
+                # take a nap. Time here determine how often status is updated, and the maximum waste of time after all
+                # threads finished.
+                time.sleep(0.2)
+            except KeyboardInterrupt as e:
+                # todo cleaner stop ?
                 break
-
-            # take a nap. Time here determine how often status is updated, and the maximum waste of time after all
-            # threads finished.
-            time.sleep(0.2)
 
         # run finalization methods for statuses
         for status in self.status:
