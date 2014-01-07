@@ -18,51 +18,59 @@ Documentation
 
 This is a work in progress, the 1.0 API may change until 1.0 is released.
 
+
 Example usage
 -------------
 
 .. code-block:: python
 
-    >>> from rdc.etl.transform.extract import Extract
-
     >>> # Sample data extract transformation.
     >>> # Use hardcoded data here for sample purpose.
 
+    >>> from rdc.etl.transform.extract import Extract
     >>> @Extract
     ... def sample_extract():
     ...     yield {'first_name': 'John', 'last_name': 'Doe', }
     ...     yield {'first_name': 'Jane', 'last_name': 'Dae', }
 
-.. code-block:: python
 
-    >>> from rdc.etl.transform import Transform
+.. code-block:: python
 
     >>> # Sample data transformation.
 
+    >>> from rdc.etl.transform import Transform
     >>> @Transform
     ... def sample_transform(hash, channel):
     ...     hash['last_name'] = hash['last_name'].upper()
     ...     hash['initials'] = '{0}.{1}.'.format(hash['first_name'][0], hash['last_name'][0]).upper()
     ...     yield hash
 
-.. code-block:: python
 
-    >>> from rdc.etl.transform.util import Log
+.. code-block:: python
 
     >>> # Sample load. This is only a screen log for sample purpose.
 
+    >>> from rdc.etl.transform.util import Log
     >>> sample_load_to_screen = Log()
+
 
 .. code-block:: python
 
+    >>> # Tie everything together, then run!
+
     >>> from rdc.etl.harness.threaded import ThreadedHarness
     >>> job = ThreadedHarness()
-
-    >>> # Tie everything together.
-    >>> harness.add_chain(sample_extract, sample_transform, sample_load_to_screen)
-
-    >>> # Run it.
+    >>> job.add_chain(sample_extract, sample_transform, sample_load_to_screen)
     >>> job()
+
+
+Running the Test Suite
+----------------------
+
+.. code-block:: shell
+
+    pip install nose
+    make test
 
 
 Release Notes
@@ -74,15 +82,7 @@ Release Notes
 * Status: console now has amazing ansi, overall stats (memory, time) added,
   experimental http status.
 * API stabilization towards 1.0.0.
-
-
-Running the Test Suite
-----------------------
-
-.. code-block:: shell
-
-    pip install nose
-    make test
+* Basic handling of KeyboardInterrupt.
 
 
 Contributing

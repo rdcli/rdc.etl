@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 # Force our version to be used, don't know what is best practice here.
 sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
-from rdc.etl import __voersion__
+from rdc.etl import __version__
 
 with open("README.rst") as readme:
     long_description = readme.read()
