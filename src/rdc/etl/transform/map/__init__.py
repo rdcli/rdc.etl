@@ -22,7 +22,7 @@ By default, maps use the topic (`_`) field for input
 
 """
 
-from abc import abstractmethod
+from rdc.etl import DEFAULT_FIELD
 from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
@@ -55,8 +55,7 @@ class Map(Transform):
 
     """
 
-    map = None
-    field = '_'
+    field = DEFAULT_FIELD
 
     def __init__(self, map=None, field=None):
         super(Map, self).__init__()

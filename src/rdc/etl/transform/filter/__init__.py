@@ -18,6 +18,7 @@ from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
+
 class Filter(Transform):
     """Filter out hashes from the stream depending on the :attr:`filter` callable return value, when called with the
     current hash as parameter.
@@ -48,7 +49,7 @@ class Filter(Transform):
     """
 
     def __init__(self, filter=None):
-        super(SimpleFilter, self).__init__()
+        super(Filter, self).__init__()
         self.filter = filter or self.filter
 
     def filter(self, hash, channel=STDIN):
@@ -61,8 +62,4 @@ class Filter(Transform):
         if self.filter(hash, channel):
             yield hash
 
-
-# For BC, deprecated.
-# todo remove in 2.0
-SimpleFilter = Filter
 

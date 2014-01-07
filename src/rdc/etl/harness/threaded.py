@@ -18,6 +18,7 @@ import datetime
 import time
 import traceback
 from threading import Thread
+from rdc.etl import TICK
 from rdc.etl.harness.base import BaseHarness
 from rdc.etl.hash import Hash
 from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
@@ -153,7 +154,7 @@ class ThreadedHarness(BaseHarness):
 
                 # take a nap. Time here determine how often status is updated, and the maximum waste of time after all
                 # threads finished.
-                time.sleep(0.2)
+                time.sleep(TICK)
             except KeyboardInterrupt as e:
                 # todo cleaner stop ?
                 break

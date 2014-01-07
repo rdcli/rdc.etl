@@ -13,11 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from rdc.etl.error import AbstractError
 
+from copy import copy
+from rdc.etl import DEFAULT_FIELD
+from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
-from copy import copy
 
 
 class SplitMap(Transform):
@@ -28,7 +29,7 @@ class SplitMap(Transform):
 
     """
 
-    field = '_'
+    field = DEFAULT_FIELD
     _output_field = None
 
     def __init__(self, split=None, field=None, output_field=None):

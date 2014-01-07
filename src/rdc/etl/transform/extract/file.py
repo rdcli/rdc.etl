@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rdc.etl import DEFAULT_FIELD
 from rdc.etl.transform.extract import Extract
 from rdc.etl.util import create_http_reader, create_file_reader, cached_property
 
@@ -32,7 +33,7 @@ class FileExtract(Extract):
 
     """
     uri = None
-    output_field = '_'
+    output_field = DEFAULT_FIELD
 
     def __init__(self, uri=None, output_field=None):
         super(FileExtract, self).__init__()

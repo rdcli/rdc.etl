@@ -24,6 +24,9 @@ except ImportError:
 
 __version__ = '1.0.0a4'
 
+TICK = 0.25
+DEFAULT_FIELD = '_'
+
 def H(*args):
     """Builds a hash from a list of pairs."""
     from rdc.etl.hash import Hash

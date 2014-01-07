@@ -20,15 +20,16 @@ As it will yield all data for each input row, the input given is usually only on
 
 """
 
+
 from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
 
 
 class Extract(Transform):
-    """Base class for extractions.
+    """Base class for extract transforms.
 
-    .. attribute:: stream_data
+    .. attribute:: extract
 
         Generator, iterable or iterable-typed callable that is used as the data source. Often used as a shortcut to
         make fast prototypes of ETL processes from a dictionary, before going further with real data sources.
@@ -94,21 +95,11 @@ class Extract(Transform):
     def extract(self):
         raise AbstractError(self.extract)
 
-    # BC
-    @property
-    def stream_data(self):
-        return self.extract
-
-    # BC
-    @stream_data.setter
-    def stream_data(self, value):
-        self.extract = value
-
     def transform(self, hash, channel=STDIN):
-        stream = self.extract() if callable(self.extract) else self.extract
+        extracted_data = self.extract() if callable(self.extract) else self.extract
 
-        if stream:
-            for line in stream:
+        if extracted_data:
+            for line in extracted_data:
                 yield hash.copy(line)
 
 

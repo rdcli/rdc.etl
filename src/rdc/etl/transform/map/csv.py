@@ -19,7 +19,6 @@ from __future__ import absolute_import
 import csv
 from rdc.etl.io import STDIN
 from rdc.etl.transform.map import Map
-
 try:
     import cStringIO as StringIO
 except:

@@ -41,7 +41,7 @@ class XmlMap(Map):
 
     .. attribute:: field
 
-        The input field.
+        The input field (defined in parent).
 
     .. attribute:: xpath
 
@@ -50,7 +50,6 @@ class XmlMap(Map):
     """
 
     xpath = None
-    field = '_'
 
     def __init__(self, map_item=None, xpath=None, field=None):
         super(XmlMap, self).__init__()
