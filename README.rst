@@ -26,7 +26,6 @@ Example usage
 
     >>> # Sample data extract transformation.
     >>> # Use hardcoded data here for sample purpose.
-
     >>> from rdc.etl.transform.extract import Extract
     >>> @Extract
     ... def sample_extract():
@@ -37,7 +36,6 @@ Example usage
 .. code-block:: python
 
     >>> # Sample data transformation.
-
     >>> from rdc.etl.transform import Transform
     >>> @Transform
     ... def sample_transform(hash, channel):
@@ -49,7 +47,6 @@ Example usage
 .. code-block:: python
 
     >>> # Sample load. This is only a screen log for sample purpose.
-
     >>> from rdc.etl.transform.util import Log
     >>> sample_load_to_screen = Log()
 
@@ -57,7 +54,6 @@ Example usage
 .. code-block:: python
 
     >>> # Tie everything together, then run!
-
     >>> from rdc.etl.harness.threaded import ThreadedHarness
     >>> job = ThreadedHarness()
     >>> job.add_chain(sample_extract, sample_transform, sample_load_to_screen)
@@ -76,13 +72,21 @@ Running the Test Suite
 Release Notes
 -------------
 
-1.0.0-dev
-.........
+1.0.0a5
+.......
 
-* Status: console now has amazing ansi, overall stats (memory, time) added,
-  experimental http status.
-* API stabilization towards 1.0.0.
-* Basic handling of KeyboardInterrupt.
+* Status: console now has amazing ansi, detailed io statistics, overall stats
+  (memory, time) added, experimental http status, db stats for database load.
+* API stabilization, cleanup and simplification towards 1.0.0.
+* Simple handling of KeyboardInterrupt: CTRL-C will now exit the running job
+  instead of making your process stale.
+* Maps simplification.
+* Enhancements to various transform classes: load.database.DatabaseLoad,
+  filter.Filter, map.xml.XmlMap, util.Log, join.database.DatabaseJoin
+* New transforms: util.Limit
+* Various bugfixes.
+* Minor enhancements: custom names in transforms, some more tests.
+* Moved repository to github.com/rdcli/etl.
 
 
 Contributing
