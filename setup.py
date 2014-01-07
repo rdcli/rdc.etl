@@ -3,49 +3,15 @@ from setuptools import setup, find_packages
 
 # Force our version to be used, don't know what is best practice here.
 sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
-from rdc.etl import __version__
+from rdc.etl import __voersion__
+
+with open("README.rst") as readme:
+    long_description = readme.read()
 
 setup(name='rdc.etl',
       version=__version__,
       description="Extract Transform Load (ETL) toolkit for python",
-      long_description="""
-
-      **The whole documentation can be found at http://etl.rdc.li/**
-
-      Toolkit for doing data integration related work, using connected
-      transformations. Unlike java based tools like talend or pentaho
-      data-integration, this is a DIY framework, and if you're looking for a
-      WYSIWIG ETL engine, you should probably go back to the previously cited
-      ones.
-
-      Create a harness.
-
-      >>> from rdc.etl.harness.threaded import ThreadedHarness as Harness
-      >>> harness = Harness()
-
-      Create some data transformations.
-
-      >>> from rdc.etl.transform.extract import Extract
-      >>> extract = Extract(stream_data=({'foo': 'bar'}, {'foo': 'baz'}))
-
-      >>> from rdc.etl.transform.simple import SimpleTransform
-      >>> transform = SimpleTransform()
-      >>> transform.add('foo').filter('upper')
-
-      >>> from rdc.etl.transform.util import Log
-      >>> load = Log()
-
-      Tie everything together.
-
-      >>> harness.add_chain(extract, transform, load)
-
-      Run.
-
-      >>> harness()
-
-      This is a work in progress, the 1.0 API may change until 1.0 is released.
-
-      """,
+      long_description=long_description,
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Console',
