@@ -21,7 +21,7 @@ class AbstractError(NotImplementedError):
     def __init__(self, method):
         super(AbstractError, self).__init__('Call to abstract method {class_name}.{method_name}(...): missing implementation.'.format(
             class_name=type(method.im_self).__name__,
-            method_name=method.__name__
+            method_name=method.__name__,
         ))
 
 
@@ -36,3 +36,13 @@ class InactiveReadableError(InactiveIOError):
 class InactiveWritableError(InactiveIOError):
     pass
 
+
+class ValidationError(RuntimeError):
+    def __init__(self, inst, message):
+        super(ValidationError, self).__init__('Validation error in {class_name}: {message}'.format(
+            class_name=type(inst).__name__,
+            message=message,
+        ))
+
+class ProhibitedOperationError(RuntimeError):
+    pass
