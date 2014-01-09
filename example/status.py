@@ -1,5 +1,5 @@
-from rdc.etl.contrib.example import Harness, build_producer, run
-from rdc.etl.transform.simple import SimpleTransform
+from rdc.etl.extra.example import Harness, build_producer, run
+from rdc.etl.extra.simple import SimpleTransform
 from rdc.etl.transform.util import Log
 
 print('########################')

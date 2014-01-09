@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rdc.etl.contrib.example import Harness, build_producer, run
-from rdc.etl.io import STDIN, STDIN2
+from rdc.etl.extra.example import Harness, build_producer, run
+from rdc.etl.io import STDIN2
 from rdc.etl.status.console import ConsoleStatus
 from rdc.etl.transform.flow.sort import Sort
 from rdc.etl.transform.flow.sortedjoin import SortedJoin

@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import unittest
-from rdc.etl.contrib.unittest import BaseTestCase
+from rdc.etl.extra.unittest import BaseTestCase
 from rdc.etl.hash import Hash
 from rdc.etl.transform.extract import Extract
 
