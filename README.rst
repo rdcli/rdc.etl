@@ -94,7 +94,7 @@ Contributing
 
 I'm Romain Dorgueil.
 
-``rdc.etl`` is on `GitHub <https://github.com/rdcli/etl>`_.
+``rdc.etl`` is on `GitHub <https://github.com/rdcli/rdc.etl>`_.
 
 Get in touch, via GitHub or otherwise, if you've got something to contribute,
 it'd be most welcome!

@@ -13,22 +13,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# this is a namespace package
-try:
-    import pkg_resources
-    pkg_resources.declare_namespace(__name__)
-except ImportError:
-    import pkgutil
-    __path__ = pkgutil.extend_path(__path__, __name__)
-
-__version__ = '1.0.0a5'
-
-TICK = 0.25
-DEFAULT_FIELD = '_'
-
-def H(*args):
-    """Builds a hash from a list of pairs."""
-    from rdc.etl.hash import Hash
-    return Hash(args)
-

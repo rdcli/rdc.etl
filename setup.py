@@ -1,53 +1,44 @@
-import os, sys
 from setuptools import setup, find_packages
-
-# Force our version to be used, don't know what is best practice here.
-sys.path.insert(0, os.path.join(os.getcwd(), 'src'))
 from rdc.etl import __version__
+
+# Human version
+version = '.'.join(map(str, __version__))
+
+# Read README file
+with open('README.rst') as readme:
+    long_description = readme.read()
+
+# Parse classifiers
+with open('classifiers.txt') as f:
+    classifiers = filter(None, map(lambda s: s.strip(), f.read().split('\n')))
+
+# Parse requirements
+with open('requirements.txt') as f:
+    install_requires = []
+    for requirement in map(lambda s: s.strip(), f.read().split('\n')):
+        _pound_pos = requirement.find('#')
+        if _pound_pos != -1:
+            requirement = requirement[0:_pound_pos].strip()
+        if len(requirement):
+            install_requires.append(requirement)
 
 with open("README.rst") as readme:
     long_description = readme.read()
 
 setup(name='rdc.etl',
-      version=__version__,
+      version=version,
       description="Extract Transform Load (ETL) toolkit for python",
       long_description=long_description,
-      classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Environment :: Console',
-        'Intended Audience :: Information Technology',
-        'Intended Audience :: System Administrators',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: OS Independent',
-        'Natural Language :: English',
-        'Programming Language :: Python',
-        'Topic :: Database',
-        'Topic :: Utilities',
-        'Topic :: Text Processing :: Filters',
-      ],
+      classifiers=classifiers,
       keywords='ETL Data-Integration',
       author='Romain Dorgueil',
       author_email='romain@dorgueil.net',
       url='http://etl.rdc.li/',
-      download_url='https://github.com/rdconseil/etl/tarball/' + __version__,
+      download_url='https://github.com/rdcli/rdc.etl/tarball/' + version,
       license='Apache License, Version 2.0',
-      packages=find_packages('src', exclude=['ez_setup', 'example', 'test']),
-      package_dir = {'': 'src'},
+      packages=find_packages(exclude=['ez_setup', 'example', 'test']),
       include_package_data=True,
-      zip_safe=False,
-      install_requires=[
-        'lxml',          # XML Processing
-        'BeautifulSoup', 
-        'requests',      # HTTP without headaches
-        'unidecode',     # Transcoding
-        'webob',         # Webapp2 dependency
-        'webapp2',       # Basic web tools
-        'sqlalchemy',    # DBAL
-        'blessings',     # Readable console & tty detection
-        'psutil',        # memory consumption
-        'repoze.lru',    # lru_cache for python 2.6+
-      ],
+      install_requires=install_requires,
       entry_points="""
       # -*- Entry points: -*-
       """,
