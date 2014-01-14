@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rdc.etl.contrib.example import Harness, build_producer, build_simple_transform, run
+from rdc.etl.extra.example import Harness, build_producer, build_simple_transform, run
 from rdc.etl.io import STDOUT, STDOUT2
 from rdc.etl.transform.flow.split import Split
 from rdc.etl.transform.util import Log

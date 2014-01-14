@@ -15,7 +15,6 @@
 # limitations under the License.
 
 from rdc.etl.io import STDIN
-
 from rdc.etl.transform import Transform
 from rdc.etl.util import filter_html
 
@@ -162,7 +161,7 @@ class SimpleTransform(Transform):
     """SimpleTransform is an attempt to make a trivial transformation easy to build, using fluid APIs and a lot of easy
     shortcuts to apply filters to some fields.
 
-    The API is not stable and this will probably go to a contrib or extra package later.
+    The API is not stable and this will probably go into an "extra" module later.
 
     Example:
 
@@ -171,12 +170,12 @@ class SimpleTransform(Transform):
     Apply "upper" method on "name" field, and store it back in "name" field.
 
     >>> t.add('name').filter('upper') # doctest: +ELLIPSIS
-    <rdc.etl.transform.simple._SimpleItemTransformationDescriptor object at ...>
+    <rdc.etl.extra.simple._SimpleItemTransformationDescriptor object at ...>
 
     Apply the lambda to "description" field content, and store it into the "full_description" field.
 
     >>> t.add('full_description', 'description').filter(lambda v: 'Description: ' + v) # doctest: +ELLIPSIS
-    <rdc.etl.transform.simple._SimpleItemTransformationDescriptor object at ...>
+    <rdc.etl.extra.simple._SimpleItemTransformationDescriptor object at ...>
 
     Remove the previously defined "useless" descriptor. This does not remove the "useless" fields into transformed
     hashes, it is only usefull to override some parent stuff.

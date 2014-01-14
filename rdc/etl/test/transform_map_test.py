@@ -16,7 +16,7 @@
 from collections import OrderedDict
 
 import unittest
-from rdc.etl.contrib.unittest import BaseTestCase
+from rdc.etl.extra.unittest import BaseTestCase
 from rdc.etl.hash import Hash
 from rdc.etl.transform.map import Map
 

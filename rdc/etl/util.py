@@ -234,6 +234,20 @@ def sfloat(mixed, default=None):
     except:
         return default
 
+def sint(mixed, default=None):
+    """Safe int cast."""
+    try:
+        return int(mixed)
+    except:
+        return default
+
+def sbool(mixed, default=None):
+    """Safe boolean cast."""
+    try:
+        return bool(mixed)
+    except:
+        return default
+
 # Exports
 terminal = _Terminal()
 html_escape = cgi.escape

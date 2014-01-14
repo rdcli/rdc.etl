@@ -16,7 +16,7 @@
 
 import unittest
 from rdc.etl.hash import Hash
-from rdc.etl.transform.simple import SimpleTransform
+from rdc.etl.extra.simple import SimpleTransform
 
 
 class TransformSimpleTestCase(unittest.TestCase):

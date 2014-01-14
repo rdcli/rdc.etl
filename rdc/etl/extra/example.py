@@ -16,7 +16,7 @@
 
 from functools import partial
 from rdc.etl.transform.extract import Extract
-from rdc.etl.transform.simple import SimpleTransform
+from rdc.etl.extra.simple import SimpleTransform
 from rdc.etl.harness.threaded import ThreadedHarness
 from rdc.etl.util import terminal as t
 

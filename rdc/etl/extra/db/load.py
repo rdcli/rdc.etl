@@ -13,9 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import copy
 
 from sqlalchemy import MetaData, Table
-from rdc.etl.io import STDIN, STDOUT, INSERT, UPDATE, SELECT
+from rdc.etl.error import ProhibitedOperationError
+from rdc.etl.hash import Hash
+from rdc.etl.io import STDIN, INSERT, UPDATE, SELECT, STDERR
 from rdc.etl.transform import Transform
 from rdc.etl.util import now, cached_property
 
@@ -34,9 +37,10 @@ class DatabaseLoad(Transform):
     discriminant = ('id', )
     created_at_field = 'created_at'
     updated_at_field = 'updated_at'
+    allowed_operations = (INSERT, UPDATE, )
 
     def __init__(self, engine=None, table_name=None, fetch_columns=None, discriminant=None, created_at_field=None,
-                 updated_at_field=None, insert_only_fields=None):
+                 updated_at_field=None, insert_only_fields=None, allowed_operations=None):
         super(DatabaseLoad, self).__init__()
 
         self.engine = engine or self.engine
@@ -53,6 +57,7 @@ class DatabaseLoad(Transform):
         self.created_at_field = created_at_field or self.created_at_field
         self.updated_at_field = updated_at_field or self.updated_at_field
         self.insert_only_fields = insert_only_fields or self.insert_only_fields
+        self.allowed_operations = allowed_operations or self.allowed_operations
 
         self._buffer = []
         self._connection = None
@@ -71,7 +76,14 @@ class DatabaseLoad(Transform):
         with self.connection.begin():
             while len(self._buffer):
                 hash = self._buffer.pop(0)
-                yield self.do_transform(hash)
+                try:
+                    yield self.do_transform(copy(hash))
+                except Exception as e:
+                    yield Hash((
+                        ('_input', hash, ),
+                        ('_transform', self, ),
+                        ('_error', e, ),
+                    )), STDERR
 
     def close_connection(self):
         self._connection.close()
@@ -139,6 +151,9 @@ class DatabaseLoad(Transform):
 
         # UPDATE
         if row:
+            if not UPDATE in self.allowed_operations:
+                raise ProhibitedOperationError('UPDATE operations are not allowed by this transformation.')
+
             _columns = self.get_columns_for(hash, row)
 
             query = '''UPDATE {table} SET {values} WHERE {criteria}'''.format(
@@ -156,6 +171,9 @@ class DatabaseLoad(Transform):
 
         # INSERT
         else:
+            if not INSERT in self.allowed_operations:
+                raise ProhibitedOperationError('INSERT operations are not allowed by this transformation.')
+
             if self.created_at_field in column_names:
                 hash[self.created_at_field] = now
             else:
