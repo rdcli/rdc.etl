@@ -6,8 +6,8 @@ rdc.etl
 python 3 support yet). It gives you all the tools needed to create complex data
 integration jobs from simple atomic io-connected transformation blocks.
 
-.. image:: https://secure.travis-ci.org/rdcli/etl.png
-  :target: http://travis-ci.org/rdcli/etl
+.. image:: https://api.travis-ci.org/rdcli/rdc.etl.png
+  :target: https://travis-ci.org/rdcli/rdc.etl
   :alt: Build Status
 
 
