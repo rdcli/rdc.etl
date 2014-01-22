@@ -38,19 +38,20 @@ class DatabaseExtract(Extract):
     query = 'SELECT 1'
     pack_size = 1000
 
-    def __init__(self, engine, query=None):
+    def __init__(self, engine, query=None, limit=None):
         super(DatabaseExtract, self).__init__()
 
         self.engine = engine
         self.query = query or self.query
+        self.limit = limit
 
     def extract(self):
         self.query = self.query.strip()
         if self.query[-1] == ';':
             self.query = self.query[0:-1]
-        offset = 0
 
-        while True:
+        offset = 0
+        while not self.limit or offset * self.pack_size < self.limit:
             query = self.query + ' LIMIT ' + str(self.pack_size) + ' OFFSET ' + str(offset * self.pack_size) + ';'
             results = self.engine.execute(query, use_labels=True).fetchall()
             if not len(results):

@@ -70,17 +70,19 @@ class XmlMap(Map):
         for item in items:
             mapped = Hash(((self.field, item, ), ))
             value_for_item = self.map_item(item)
-            if isgenerator(value_for_item):
-                for _value in value_for_item:
-                    yield copy(mapped).update(_value)
-            else:
-                try:
-                    mapped.update(value_for_item)
-                    yield mapped
-                except TypeError, e:
-                    raise TypeError('{name}.map_item(...) must be iterable.'.format(
-                        name=type(self).__name__
-                    ))
+            if value_for_item:
+                if isgenerator(value_for_item):
+                    for _value in value_for_item:
+                        if _value:
+                            yield copy(mapped).update(_value)
+                else:
+                    try:
+                        mapped.update(value_for_item)
+                        yield mapped
+                    except TypeError, e:
+                        raise TypeError('{name}.map_item(...) must be iterable.'.format(
+                            name=type(self).__name__
+                        ))
 
     def map_item(self, item):
         """Convert one matched XML item to a dictionary.

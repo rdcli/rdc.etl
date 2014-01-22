@@ -251,7 +251,13 @@ def sbool(mixed, default=None):
 # Exports
 terminal = _Terminal()
 html_escape = cgi.escape
-html_unescape = HTMLParser.HTMLParser().unescape
+def html_unescape(txt):
+    if not isinstance(txt, unicode):
+        try:
+            txt = txt.decode('raw_unicode_escape')
+        except:
+            print txt
+    return HTMLParser.HTMLParser().unescape(txt)
 now = datetime.now
 cached_property = cached_property
 etree = etree
