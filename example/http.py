@@ -3,6 +3,7 @@ import time
 
 from rdc.etl.harness.threaded import ThreadedHarness
 from rdc.etl.extra.example import build_producer, run
+from rdc.etl.status.console import ConsoleStatus
 from rdc.etl.status.http import HttpStatus
 from rdc.etl.transform import Transform
 
@@ -20,5 +21,6 @@ def delay2(h, c):
     yield h
 
 h.add_chain(p1, delay, delay2)
+h.status.append(ConsoleStatus())
 h.status.append(HttpStatus())
 run(h)
