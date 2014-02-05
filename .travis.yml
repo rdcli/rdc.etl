@@ -5,6 +5,6 @@ python:
 install:
   - "pip install ."
 script:
-  - python example/shapes.py
-  - python example/flow.py
+  - python example/example_shapes.py
+  - python example/example_flow.py
   - make clean test

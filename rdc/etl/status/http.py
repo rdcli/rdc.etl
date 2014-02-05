@@ -86,8 +86,10 @@ class HttpHandler(RequestHandler):
 </html>''')
 
 class HttpServerThread(Thread):
+    daemon = True
+
     def __init__(self, harness, verbose=None):
-        super(HttpServerThread, self).__init__(None, None, None, (), dict(), verbose)
+        super(HttpServerThread, self).__init__(verbose=verbose)
         self.wsgi_app = webapp2.WSGIApplication([
             ('/', HttpHandler),
         ], debug=True, config={
@@ -99,11 +101,11 @@ class HttpServerThread(Thread):
         self._wsgi_server.serve_forever()
 
 class HttpStatus(BaseStatus):
-    def initialize(self, harness):
+    def initialize(self, harness, debug, profile):
         self.server = HttpServerThread(harness)
         self.server.start()
 
-    def update(self, harness):
+    def update(self, harness, debug, profile):
         pass
 
 
