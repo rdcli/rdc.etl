@@ -25,6 +25,15 @@ from rdc.etl.util import terminal as t
 def shade(v):
     return t.black(t.bold(v))
 
+def _repr(v):
+    try:
+        return unicode(v)
+    except:
+        try:
+            return v.decode('utf-8')
+        except:
+            return repr(v)
+
 class Log(Transform):
     """Identity transform that adds a console output side effect, to watch what is going through Queues at some point
     of an ETL process.
@@ -57,7 +66,7 @@ class Log(Transform):
         if isinstance(s, Hash):
             _s, s = s, []
             for k in _s.keys():
-                s.append(u'  {k}{t.black}:{t.bold}{tp}{t.normal} {t.black}{t.bold}→{t.normal} {t.black}«{t.normal}{v}{t.black}»{t.normal}{t.clear_eol}'.format(k=k, v=_s[k], t=t, tp=type(_s[k]).__name__))
+                s.append(u'  {k}{t.black}:{t.bold}{tp}{t.normal} {t.black}{t.bold}→{t.normal} {t.black}«{t.normal}{v}{t.black}»{t.normal}{t.clear_eol}'.format(k=k, v=_repr(_s[k]), t=t, tp=type(_s[k]).__name__))
         else:
             # unpack
             s = s.split('\n')
