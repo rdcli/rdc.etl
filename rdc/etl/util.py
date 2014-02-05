@@ -211,7 +211,7 @@ def create_http_reader(url):
     """
 
     def http_reader():
-        return requests.get(url).text.encode('utf-8')
+        return requests.get(url).content
 
     return http_reader
 
