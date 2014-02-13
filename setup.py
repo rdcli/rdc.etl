@@ -35,4 +35,8 @@ setup(
     packages=find_packages(exclude=['ez_setup', 'example', 'test']),
     include_package_data=True,
     install_requires=read('requirements.txt', requirements_filter),
+    entry_points="""
+    [paste.paster_create_template]
+    etl_project=rdc.etl.extra.tools.template:ETLProjectTemplate
+    """,
 )
