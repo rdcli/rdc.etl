@@ -5,7 +5,6 @@ def main():
     for JobFactory in (ExampleJob, ):
         job = JobFactory()
         job.status.append(ConsoleStatus())
-
         print 'Running', job
         job()
 

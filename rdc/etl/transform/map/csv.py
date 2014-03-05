@@ -55,7 +55,7 @@ class CsvMap(Map):
     def __init__(self, field=None, delimiter=None, quotechar=None, headers=None, skip=None):
         super(CsvMap, self).__init__(field=field)
 
-        self.delimiter = delimiter or self.delimiter
+        self.delimiter = str(delimiter or self.delimiter)
         self.quotechar = quotechar or self.quotechar
         self.headers = headers or self.headers
         self.skip = skip or self.skip
