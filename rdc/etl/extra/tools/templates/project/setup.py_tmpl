@@ -1,0 +1,26 @@
+from setuptools import setup, find_packages
+
+version = ${repr(version)|"0.0"}
+
+setup(name=${repr(project)},
+    version=version,
+    description="${description|nothing}",
+    long_description="""\
+    ${long_description|nothing}""",
+    classifiers=[],
+    keywords=${repr(keywords)|empty},
+    author=${repr(author)|empty},
+    author_email=${repr(author_email)|empty},
+    url=${repr(url)|empty},
+    license=${repr(license_name)|empty},
+    packages=find_packages(exclude=['ez_setup']),
+    include_package_data=True,
+    zip_safe=${repr(bool(zip_safe))|False},
+    install_requires=[
+      # Extra requirements go here #
+    ],
+    entry_points="""
+        [paste.app_factory]
+        main=${package}:make_app
+    """,
+)

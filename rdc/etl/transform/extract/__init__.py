@@ -20,11 +20,9 @@ As it will yield all data for each input row, the input given is usually only on
 
 """
 
-
 from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
-
 
 class Extract(Transform):
     """Base class for extract transforms.
