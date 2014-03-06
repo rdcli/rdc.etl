@@ -4,6 +4,7 @@ python:
   - pypy
 install:
   - "pip install ."
+  - "pip install -r requirements-dev.txt"
 script:
   - python example/example_shapes.py
   - python example/example_flow.py
