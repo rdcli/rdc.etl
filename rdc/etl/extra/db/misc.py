@@ -32,7 +32,9 @@ class DatabaseCreateTable(Transform):
         self.drop_if_exists = drop_if_exists or self.drop_if_exists
         self._executed = False
 
-    def __call__(self, hash):
+    def transform(self, hash, channel=STDIN):
+        # this is a bit counterproductive, should tell that we don't change the flux, or delegate this to databaseload
+        # or something
         if not self._executed:
             if self.drop_if_exists:
                 query = 'DROP TABLE IF EXISTS %s;' % (self.table_name, )
@@ -44,11 +46,5 @@ class DatabaseCreateTable(Transform):
             )
             self.engine.execute(query)
             self._executed = True
-
-        return super(DatabaseCreateTable, self).__call__(hash)
-
-    def transform(self, hash, channel=STDIN):
-        # this is a bit counterproductive, should tell that we don't change the flux, or delegate this to databaseload
-        # or something
         yield hash
 
