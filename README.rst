@@ -72,6 +72,22 @@ Running the Test Suite
 Release Notes
 -------------
 
+1.0.0a6
+.......
+
+* Database transformations: now present in rdc.etl.extra subpackages, to avoid
+  mixing core API and sugar box.
+* Database transformations: more flexibility in what is allowed (insert/update).
+* Better standard compliance (thanks #python)
+* Harness is now called Job, for simplicity sake. Old name will be kept too (BC).
+* XMLMap enhancements.
+* HTTP status interface (early minimalistic version).
+* Changed examples name to avoid import hell.
+* Less hackish http reader, better unicode support (@jmorel).
+* PasteScript can now be used to generate an empty working ETL project.
+* FileProxy based download manager.
+* Minor fixes.
+
 1.0.0a5
 .......
 
