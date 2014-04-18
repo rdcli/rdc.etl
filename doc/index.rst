@@ -19,6 +19,7 @@ there is no wysiwyg editor provided.
    filesystem
    database
    status
+   cookbook/index
    contribute
 
 Indices and tables
