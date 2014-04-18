@@ -28,5 +28,5 @@ Clean
 SimpleTransform
 :::::::::::::::
 
-.. module:: rdc.etl.transform.simple
+.. module:: rdc.etl.extra.simple
 .. autoclass:: SimpleTransform

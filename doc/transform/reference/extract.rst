@@ -12,7 +12,7 @@ Extract (base class and decorator)
 DatabaseExtract
 :::::::::::::::
 
-.. module:: rdc.etl.transform.extract.database
+.. module:: rdc.etl.extra.db.extract
 .. autoclass:: DatabaseExtract
 
 FileExtract
@@ -20,3 +20,4 @@ FileExtract
 
 .. module:: rdc.etl.transform.extract.file
 .. autoclass:: FileExtract
+

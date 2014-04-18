@@ -1,6 +1,9 @@
 Jobs
 ====
 
+Concept
+:::::::
+
 *The Scheduler and the Overseer*
 
 Jobs, (previsouly *harness*), are the glue that ties transformations together and let them interract.
@@ -38,4 +41,16 @@ thread id. ``Statistics`` is the number of lines that got read or written to inp
 >>> # Call the job == run the ETL process
 >>> job()
 
+API
+:::
 
+.. currentmodule:: rdc.etl.harness.base
+.. autoclass:: IHarness
+
+.. currentmodule:: rdc.etl.job
+.. autoclass:: Job
+
+    .. automethod:: add_chain
+    .. automethod:: get_threads
+    .. automethod:: get_transforms
+    .. automethod:: __call__

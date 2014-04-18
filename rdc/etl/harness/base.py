@@ -52,7 +52,8 @@ class BaseHarness(IHarness):
         pass
 
     def __call__(self):
-        """Implements IHarness.__call__()"""
+        """Run the Job."""
+
         self.initialize()
         self.validate()
         _value = self.loop()
