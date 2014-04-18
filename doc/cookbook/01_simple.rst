@@ -1,5 +1,5 @@
-Recipe: build a trivial transformation
-======================================
+Recipe: Simple data processing
+==============================
 
 What we want to achieve
 -----------------------
@@ -18,7 +18,6 @@ Code
 
 .. literalinclude:: ../../example/cookbook/01_simple.py
    :language: python
-   :linenos:
 
 Output
 ------
@@ -48,3 +47,10 @@ Output
       full_name:str → «George Sand»
     ····························································
 
+Pitfalls
+--------
+
+This job is pretty useless, because it reads hardcoded values and write the result to your current terminal. You may
+want to read:
+
+* :doc:`02_csv`
