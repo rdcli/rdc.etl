@@ -1,8 +1,22 @@
 Kickstart
-=========
+===========
 
-A fast 4 step overview to get you kickstarted into rdc.etl.
+To get started, you should also read pragmatic examples in the :doc:`cookbook/index`.
 
+
+Create an empty project
+=======================
+
+If you want to bootstrap an ETL project on your computer, you can now do it using the provided PasteScript template.
+
+.. code-block:: shell
+
+    pip install PasteScript
+    paster create -t etl_project MyProject
+
+
+Overview
+========
 
 Create transformations
 ::::::::::::::::::::::
@@ -64,8 +78,8 @@ We'll use the screen as our load target ...
     default input channel), but we'll use it as such for demonstration purpose.
 
 
-Build your harness
-::::::::::::::::::
+Build your job
+::::::::::::::
 
 * Connect transformations
 * Runnable
@@ -73,19 +87,19 @@ Build your harness
 
 .. code-block:: python
 
-    from rdc.etl.harness.threaded import ThreadedHarness as Harness
+    from rdc.etl.job import Job
 
-    harness = Harness()
+    job = Job()
 
 
 Tie transformations together
 ::::::::::::::::::::::::::::
 
-The ``Harness`` has a ``add_chain()`` method that can be used to easily plug a list of ordered transformations together.
+The ``Job`` has a ``add_chain()`` method that can be used to easily plug a list of ordered transformations together.
 
 .. code-block:: python
 
-    harness.add_chain(my_extract, my_transform, my_load)
+    job.add_chain(my_extract, my_transform, my_load)
 
 
 Run the job
@@ -95,6 +109,6 @@ Our job is ready, you can run it.
 
 .. code-block:: python
 
-    harness()
+    job()
 
 
