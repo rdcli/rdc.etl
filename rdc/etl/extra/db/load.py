@@ -13,8 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import copy
 
+from copy import copy
 from sqlalchemy import MetaData, Table
 from rdc.etl.error import ProhibitedOperationError
 from rdc.etl.hash import Hash

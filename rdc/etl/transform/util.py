@@ -80,11 +80,13 @@ class Log(Transform):
 
 
     def writehr(self, label=None):
+        width = t.width or 80
+
         if label:
             label = unicode(label)
-            sys.stderr.write(t.black(u'·' * 4) + shade('{') + label + shade('}') + t.black(u'·' * (t.width - (6+len(label)) - 1)) + '\n')
+            sys.stderr.write(t.black(u'·' * 4) + shade('{') + label + shade('}') + t.black(u'·' * (width - (6+len(label)) - 1)) + '\n')
         else:
-            sys.stderr.write(t.black(u'·' * (t.width-1) + '\n'))
+            sys.stderr.write(t.black(u'·' * (width-1) + '\n'))
 
 
     def writeln(self, s):
