@@ -179,10 +179,16 @@ def filter_html(value):
     if value is None:
         return None
     soup = BeautifulSoup(value)
-    for tag in soup.findAll(True):
+    tags = soup.findAll(True)
+    for tag in tags:
         if tag.name not in VALID_HTML_TAGS:
             tag.hidden = True
-    return soup.renderContents().replace('  ', ' ').replace('\n', '').replace('<br />', '\n')
+
+    if tags:
+        value = soup.renderContents().replace('  ', ' ').replace('\n', '').replace('<br />', '\n')
+    else:
+        value = soup.renderContents().replace('  ', ' ')
+    return value
 
 
 class Timer(object):
