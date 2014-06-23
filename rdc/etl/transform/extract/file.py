@@ -13,6 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+import time
+import datetime
 
 from rdc.etl import DEFAULT_FIELD
 from rdc.etl.transform.extract import Extract
@@ -60,3 +63,19 @@ class FileExtract(Extract):
             self.output_field: self.content
         }
 
+class CachedFileExtract(FileExtract):
+    def __init__(self, uri=None, output_field=None, cache_path=None, cache_lifetime=None):
+        super(CachedFileExtract, self).__init__(uri, output_field)
+        self.cache_path = cache_path
+        self.cache_lifetime = cache_lifetime
+
+
+    @cached_property
+    def content(self):
+        if not os.path.exists(self.cache_path) or os.path.getmtime(self.cache_path) < time.mktime(
+                (datetime.datetime.now() - datetime.timedelta(seconds=self.cache_lifetime)).timetuple()):
+            with open(self.cache_path, 'w+b') as f:
+                f.write(self.reader())
+
+        with open(self.cache_path, 'r') as f:
+            return f.read()
