@@ -42,18 +42,21 @@ class DatabaseExtract(Extract):
         super(DatabaseExtract, self).__init__()
 
         self.engine = engine
-        self.query = query or self.query
+        try:
+            self.query = query or self.query
+        except AttributeError as e:
+            pass
         self.limit = limit
 
     def extract(self):
-        self.query = self.query.strip()
-        if self.query[-1] == ';':
-            self.query = self.query[0:-1]
+        query = self.query.strip()
+        if query[-1] == ';':
+            query = query[0:-1]
 
         offset = 0
         while not self.limit or offset * self.pack_size < self.limit:
-            query = self.query + ' LIMIT ' + str(self.pack_size) + ' OFFSET ' + str(offset * self.pack_size) + ';'
-            results = self.engine.execute(query, use_labels=True).fetchall()
+            _query = query + ' LIMIT ' + str(self.pack_size) + ' OFFSET ' + str(offset * self.pack_size) + ';'
+            results = self.engine.execute(_query, use_labels=True).fetchall()
             if not len(results):
                 break
 
