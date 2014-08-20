@@ -190,7 +190,7 @@ def filter_html(value):
         value = soup.renderContents().replace('  ', ' ')
 
     if value:
-        value = BeautifulSoup(value, convertEntities=BeautifulSoup.HTML_ENTITIES).contents.pop()
+        value = html_unescape(unicode(value, 'utf-8'))
 
     return value
 
