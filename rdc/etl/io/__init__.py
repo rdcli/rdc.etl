@@ -211,11 +211,14 @@ class OutputDemultiplexer(IWritable, Statisticable):
     def __demux(self, data):
         if isinstance(data, Hash):
             return data, DEFAULT_OUTPUT_CHANNEL
+
         if len(data) == 1:
             return data, DEFAULT_OUTPUT_CHANNEL
+
         if len(data) == 2:
             return data[0], data[1]
-        raise ValueError('Unintelligible message.')
+
+        return data, DEFAULT_OUTPUT_CHANNEL
 
 
 class Input(Queue, IReadable, IWritable):

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TICK = 0.25
+TICK = 0.1
 DEFAULT_FIELD = '_'
 
 def H(*args):

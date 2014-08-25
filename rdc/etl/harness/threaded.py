@@ -21,7 +21,8 @@ from threading import Thread
 from rdc.etl import TICK
 from rdc.etl.harness.base import BaseHarness
 from rdc.etl.hash import Hash
-from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
+from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End, \
+    STDERR
 from rdc.etl.transform import Transform
 
 class _IntSequenceGenerator(object):
@@ -49,7 +50,14 @@ class TransformThread(Thread):
         self.__thread_number = self.__class__.__thread_counter.next()
 
     def handle_error(self, exc, tb):
-        print str(exc) + '\n\n' + tb + '\n\n\n\n'
+        if STDERR in self.transform.OUTPUT_CHANNELS:
+            self.transform._output.put(({
+                'transform': self.transform,
+                'exception': exc,
+                'traceback': tb,
+                }, STDERR, ))
+        else:
+            print str(exc) + '\n\n' + tb + '\n\n\n\n'
 
     @property
     def name(self):
@@ -90,6 +98,7 @@ class ThreadedHarness(BaseHarness):
         self.profile = profile
         self.status = []
         self._transforms = {}
+        self._transform_indexes = {}
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
         self._started_at = None
@@ -111,9 +120,14 @@ class ThreadedHarness(BaseHarness):
 
     def add(self, transform):
         """Register a transformation, create a thread object to manage its future lifecycle."""
-        id = self._current_id.next()
-        self._transforms[id] = transform
-        self._threads[id] = TransformThread(transform)
+        t_ident = id(transform)
+
+        if not t_ident in self._transform_indexes:
+            id_ = self._current_id.next()
+            self._transforms[id_] = transform
+            self._transform_indexes[t_ident] = id_
+            self._threads[id_] = TransformThread(transform)
+
         return transform # BC, maybe id would be a better thing to return (todo 2.0, or even 1.0 before api freeze)
 
     def validate(self):
