@@ -40,7 +40,7 @@ class DatabaseCreateTable(Transform):
                 query = 'DROP TABLE IF EXISTS %s;' % (self.table_name, )
                 self.engine.execute(query)
 
-            query = 'CREATE TABLE %s (%s)' % (
+            query = 'CREATE TABLE %s (%s) CHARACTER SET utf8 COLLATE utf8_general_ci;' % (
                 self.table_name,
                 ', \n'.join(['%s %s' % (n, t) for n, t in self.structure])
             )
