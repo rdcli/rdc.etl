@@ -20,16 +20,18 @@ from rdc.etl.transform import Transform
 
 class DatabaseCreateTable(Transform):
     table_name = None
+    table_options = ''
     structure = ()
     drop_if_exists = False
 
-    def __init__(self, engine, table_name=None, structure=None, drop_if_exists=None):
+    def __init__(self, engine, table_name=None, structure=None, drop_if_exists=None, table_options=None):
         super(DatabaseCreateTable, self).__init__()
 
         self.engine = engine
         self.table_name = table_name or self.table_name
         self.structure = structure or self.structure
         self.drop_if_exists = drop_if_exists or self.drop_if_exists
+        self.table_options = table_options or self.table_options
         self._executed = False
 
     def transform(self, hash, channel=STDIN):
@@ -40,11 +42,15 @@ class DatabaseCreateTable(Transform):
                 query = 'DROP TABLE IF EXISTS %s;' % (self.table_name, )
                 self.engine.execute(query)
 
-            query = 'CREATE TABLE %s (%s) CHARACTER SET utf8 COLLATE utf8_general_ci;' % (
+            query = 'CREATE TABLE %s (%s) %s;' % (
                 self.table_name,
-                ', \n'.join(['%s %s' % (n, t) for n, t in self.structure])
+                ', \n'.join(['%s %s' % (n, t) for n, t in self.structure]),
+                self.table_options
             )
             self.engine.execute(query)
             self._executed = True
         yield hash
 
+
+class DatabaseCreateUTF8Table(DatabaseCreateTable):
+    table_options = 'CHARACTER SET utf8 COLLATE utf8_general_ci'
