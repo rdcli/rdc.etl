@@ -18,4 +18,4 @@ from .sql import SqlExec
 from .extract import DatabaseExtract
 from .join import DatabaseJoin
 from .load import DatabaseLoad
-from .misc import DatabaseCreateTable, DatabaseCreateUTF8Table
+from .misc import DatabaseCreateTable

@@ -50,7 +50,3 @@ class DatabaseCreateTable(Transform):
             self.engine.execute(query)
             self._executed = True
         yield hash
-
-
-class DatabaseCreateUTF8Table(DatabaseCreateTable):
-    table_options = 'CHARACTER SET utf8 COLLATE utf8_general_ci'
