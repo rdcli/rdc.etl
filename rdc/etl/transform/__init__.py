@@ -116,7 +116,7 @@ class Transform(ITransform, Statisticable):
 
         try:
             # Pull data from the first available input channel (blocking)
-            data, channel = self._input.get()
+            data, channel = self._input.get(timeout=1)
             # Execute actual transformation
             self.__execute_and_handle_output(self.transform, data, channel)
         finally:

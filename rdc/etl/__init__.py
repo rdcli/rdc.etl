@@ -15,6 +15,7 @@
 # limitations under the License.
 
 TICK = 0.1
+STATUS_PERIOD = 10
 DEFAULT_FIELD = '_'
 
 def H(*args):
