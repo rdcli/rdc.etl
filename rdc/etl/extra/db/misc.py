@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from sqlalchemy.exc import OperationalError
 
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
@@ -37,16 +38,21 @@ class DatabaseCreateTable(Transform):
     def transform(self, hash, channel=STDIN):
         # this is a bit counterproductive, should tell that we don't change the flux, or delegate this to databaseload
         # or something
-        if not self._executed:
-            if self.drop_if_exists:
-                query = 'DROP TABLE IF EXISTS %s;' % (self.table_name, )
-                self.engine.execute(query)
+        try:
+            if not self._executed:
+                if self.drop_if_exists:
+                    try:
+                        query = 'DROP TABLE %s;' % (self.table_name, )
+                        self.engine.execute(query)
+                    except (OperationalError, ) as e:
+                        pass
 
-            query = 'CREATE TABLE %s (%s) %s;' % (
-                self.table_name,
-                ', \n'.join(['%s %s' % (n, t) for n, t in self.structure]),
-                self.table_options
-            )
-            self.engine.execute(query)
+                query = 'CREATE TABLE %s (%s) %s;' % (
+                    self.table_name,
+                    ', \n'.join(['%s %s' % (n, t) for n, t in self.structure]),
+                    self.table_options
+                )
+                self.engine.execute(query)
+        finally:
             self._executed = True
-        yield hash
+            yield hash
