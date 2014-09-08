@@ -226,6 +226,30 @@ def create_http_reader(url):
     return http_reader
 
 
+def create_ftp_reader(url):
+    """
+    Simple reader for an HTTP resource.
+    """
+    import urlparse, ftplib
+
+    parsed_url = urlparse.urlparse(url)
+
+    def ftp_reader():
+        ftp_file_content = []
+
+        def handle_binary(data):
+            ftp_file_content.append(data)
+
+        ftp = ftplib.FTP(host=parsed_url.hostname,
+                         user=parsed_url.username,
+                         passwd=parsed_url.password)
+        ftp.retrbinary(cmd='RETR {0}'.format(parsed_url.path),
+                       callback=handle_binary)
+        return ''.join(ftp_file_content)
+
+    return ftp_reader
+
+
 def create_file_reader(path):
     """
     Simple reader for a local filesystem resource.
