@@ -41,18 +41,21 @@ class DatabaseCreateTable(Transform):
         try:
             if not self._executed:
                 if self.drop_if_exists:
+                    query = 'DROP TABLE %s;' % (self.table_name, )
                     try:
-                        query = 'DROP TABLE %s;' % (self.table_name, )
                         self.engine.execute(query)
                     except (OperationalError, ) as e:
-                        pass
+                        pass # Table cannot be dropped, it probably does not exist
 
                 query = 'CREATE TABLE %s (%s) %s;' % (
                     self.table_name,
                     ', \n'.join(['%s %s' % (n, t) for n, t in self.structure]),
                     self.table_options
                 )
-                self.engine.execute(query)
+                try:
+                    self.engine.execute(query)
+                except (OperationalError, ) as e:
+                    pass # Table cannot be created, it probably already exists
         finally:
             self._executed = True
             yield hash
