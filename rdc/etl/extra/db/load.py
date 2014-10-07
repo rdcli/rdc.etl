@@ -46,9 +46,9 @@ class DatabaseLoad(Transform):
         self.engine = engine or self.engine
         self.table_name = table_name or self.table_name
 
-        # xxx should take self.fetch_columns into account if provided
+        # XXX should take self.fetch_columns into account if provided
         self.fetch_columns = {}
-        if isinstance(fetch_columns, list):
+        if isinstance(fetch_columns, (list, tuple, )):
             self.add_fetch_column(*fetch_columns)
         elif isinstance(fetch_columns, dict):
             self.add_fetch_column(**fetch_columns)
