@@ -25,4 +25,14 @@ def TransformBuilder(cls, *args, **kwargs):
         return wrapped_constructor
     return wrapper
 
+def TransformBuilder2(cls, *args, **kwargs):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped_constructor(*more_args, **more_kwargs):
+            kwargs.update(more_kwargs)
+            t = cls(*(args+more_args), **kwargs)
+            t2 = f(t)
+            return t2 or t
+        return wrapped_constructor
+    return wrapper
 

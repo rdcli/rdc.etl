@@ -253,6 +253,9 @@ class ThreadedHarness(BaseHarness):
             # output contains the input we will plug our output into.
             self.__plug(last_transform._output, 0, output, output_channel)
 
+        # fluid api
+        return self
+
     # Private stuff.
 
     def __find_input(self, mixed, default=DEFAULT_INPUT_CHANNEL):
