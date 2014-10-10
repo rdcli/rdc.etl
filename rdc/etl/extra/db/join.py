@@ -214,7 +214,6 @@ class DatabaseJoinOrCreate(Join):
 
         if not _key in self._result_cache:
             try:
-                print 'not key', _key
                 mapped = self.find(identity)
                 if not mapped:
                     mapped = self.create(identity, self.get_params(hash))
