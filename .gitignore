@@ -12,3 +12,6 @@
 
 # sphinx
 /doc/_build
+
+# Coverage
+/.coverage
