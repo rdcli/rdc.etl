@@ -16,5 +16,13 @@
 
 from rdc.etl.harness.threaded import ThreadedHarness
 
+
 class Job(ThreadedHarness):
     pass
+
+
+class JobList(list):
+    def __or__(self, other):
+        """pipe operator"""
+        return type(self)(self + [other])
+
