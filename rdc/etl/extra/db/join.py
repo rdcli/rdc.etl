@@ -108,43 +108,30 @@ class DatabaseJoinOrCreate(Join):
 
     """
 
-    def __init__(self, engine, table_name, identity = None, params = None, output = None):
+    table_name = None
+
+    def __init__(self, engine, table_name = None, identity = None, params = None, output = None):
         super(DatabaseJoinOrCreate, self).__init__()
         self.engine = engine
-        self.table_name = table_name
-
-        if identity:
-            if callable(identity):
-                self.get_identity = identity
-            else:
-                raise TypeError('identity parameter should be callable')
-
-        if params:
-            if callable(params):
-                self.get_params = params
-            else:
-                raise TypeError('params parameter should be callable')
-
-        if output:
-            if callable(output):
-                self.get_output = output
-            else:
-                raise TypeError('output parameter should be callable')
+        self.table_name = table_name or self.table_name
+        self.identity = callable(identity) and identity or self.identity
+        self.params = callable(params) and params or self.params
+        self.output = callable(output) and output or self.output
 
         self._result_cache = {}
 
-    def get_identity(self, hash):
-        raise AbstractError(self.get_identity)
+    def identity(self, hash):
+        raise AbstractError(self.identity)
+
+    def params(self, hash):
+        return {}
+
+    def output(self, mapped):
+        raise AbstractError(self.output)
 
     @classmethod
     def get_cache_key(cls, identity):
         return hash(tuple(sorted(identity.items())))
-
-    def get_params(self, hash):
-        return {}
-
-    def get_output(self, mapped):
-        raise AbstractError(self.get_output)
 
     def get_find_sql(self, identity):
         """Get SQL for object retrieval.
@@ -207,7 +194,7 @@ class DatabaseJoinOrCreate(Join):
         if channel != STDIN:
             raise ValueError('Unsupported channel')
 
-        identity = self.get_identity(hash)
+        identity = self.identity(hash)
         assert len(identity), 'Identity should not be empty, how the fuck do you want me to retrieve an object otherwise?'
 
         _key = self.get_cache_key(identity)
@@ -216,10 +203,10 @@ class DatabaseJoinOrCreate(Join):
             try:
                 mapped = self.find(identity)
                 if not mapped:
-                    mapped = self.create(identity, self.get_params(hash))
+                    mapped = self.create(identity, self.params(hash))
                 if not mapped:
                     raise RuntimeError('Could not find or create associated object, aborting.')
-                self._result_cache[_key] = self.get_output(mapped)
+                self._result_cache[_key] = self.output(mapped)
             except:
                 self._result_cache[_key] = False
                 raise
