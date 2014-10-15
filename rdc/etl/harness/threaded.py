@@ -219,7 +219,7 @@ class ThreadedHarness(BaseHarness):
 
         """
         if not len(transforms):
-            raise Exception('At least one transform should be provided to form a chain.')
+            return self
 
         input, output, input_channel, output_channel = None, None, None, None
 
