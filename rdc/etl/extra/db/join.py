@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import OrderedDict
+import itertools
+
+from rdc.etl.error import AbstractError
 from rdc.etl.io import STDIN
 from rdc.etl.transform.join import Join
 
@@ -90,4 +94,123 @@ class DatabaseJoin(Join):
         self._connection = None
 
 
+class DatabaseJoinOrCreate(Join):
+    """
+    Find a link in a related table, or create related object if it cannot be found.
+
+    Relies on three concepts: identity, params and output.
+
+    Identity is the dictionary that will be used for the "find" criteria.
+    Params is the dictionary that will be used to populate new database row values.
+    Output takes the found mapped item in database, and returns a dictionary of the hash fields to update.
+
+    Values are cached, so you cannot yield different modifications from the same object. For more informations, RTFS.
+
+    """
+
+    table_name = None
+
+    def __init__(self, engine, table_name = None, identity = None, params = None, output = None):
+        super(DatabaseJoinOrCreate, self).__init__()
+        self.engine = engine
+        self.table_name = table_name or self.table_name
+        self.identity = callable(identity) and identity or self.identity
+        self.params = callable(params) and params or self.params
+        self.output = callable(output) and output or self.output
+
+        self._result_cache = {}
+
+    def identity(self, hash):
+        raise AbstractError(self.identity)
+
+    def params(self, hash):
+        return {}
+
+    def output(self, mapped):
+        raise AbstractError(self.output)
+
+    @classmethod
+    def get_cache_key(cls, identity):
+        return hash(tuple(sorted(identity.items())))
+
+    def get_find_sql(self, identity):
+        """Get SQL for object retrieval.
+
+        :param identity:
+        :return:
+        """
+        return '''
+            SELECT *
+            FROM {table_name} t
+            WHERE {where}
+            LIMIT 1
+        '''.strip().format(
+            table_name = self.table_name,
+            where = ' AND '.join(('t.{field} = %s'.format(field=field) for field, value in identity.items()))
+        )
+
+    def get_create_sql(self, params):
+        """Get SQL for object creation.
+
+        :param identity:
+        :param params:
+        :return:
+        """
+        return '''
+            INSERT INTO {table_name}
+            ({fields}) VALUES ({values})
+        '''.strip().format(
+            table_name = self.table_name,
+            fields = ', '.join((field for field in params.keys())),
+            values = ', '.join(['%s'] * len(params)),
+            )
+
+    def find(self, identity):
+        """Find an object based on identity.
+
+        :param identity:
+        :return:
+        """
+        return self.engine.execute(
+            self.get_find_sql(identity),
+            *identity.values()
+        ).fetchone()
+
+    def create(self, identity, params):
+        """Create an object based on identity and params.
+
+        :param identity:
+        :param params:
+        :return:
+        """
+        params = OrderedDict(itertools.chain(params.iteritems(), identity.iteritems()))
+        self.engine.execute(
+            self.get_create_sql(params),
+            *params.values()
+        )
+        return self.find(identity)
+
+    def join(self, hash, channel=STDIN):
+        if channel != STDIN:
+            raise ValueError('Unsupported channel')
+
+        identity = self.identity(hash)
+        assert len(identity), 'Identity should not be empty, how the fuck do you want me to retrieve an object otherwise?'
+
+        _key = self.get_cache_key(identity)
+
+        if not _key in self._result_cache:
+            try:
+                mapped = self.find(identity)
+                if not mapped:
+                    mapped = self.create(identity, self.params(hash))
+                if not mapped:
+                    raise RuntimeError('Could not find or create associated object, aborting.')
+                self._result_cache[_key] = self.output(mapped)
+            except:
+                self._result_cache[_key] = False
+                raise
+
+        if self._result_cache[_key]:
+            yield hash.copy(self._result_cache[_key])
 

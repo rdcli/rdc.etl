@@ -188,6 +188,10 @@ def filter_html(value):
         value = soup.renderContents().replace('  ', ' ').replace('\n', '').replace('<br />', '\n')
     else:
         value = soup.renderContents().replace('  ', ' ')
+
+    if value:
+        value = html_unescape(unicode(value, 'utf-8'))
+
     return value
 
 
@@ -220,6 +224,30 @@ def create_http_reader(url):
         return requests.get(url).content
 
     return http_reader
+
+
+def create_ftp_reader(url):
+    """
+    Simple reader for an HTTP resource.
+    """
+    import urlparse, ftplib
+
+    parsed_url = urlparse.urlparse(url)
+
+    def ftp_reader():
+        ftp_file_content = []
+
+        def handle_binary(data):
+            ftp_file_content.append(data)
+
+        ftp = ftplib.FTP(host=parsed_url.hostname,
+                         user=parsed_url.username,
+                         passwd=parsed_url.password)
+        ftp.retrbinary(cmd='RETR {0}'.format(parsed_url.path),
+                       callback=handle_binary)
+        return ''.join(ftp_file_content)
+
+    return ftp_reader
 
 
 def create_file_reader(path):

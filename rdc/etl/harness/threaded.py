@@ -13,15 +13,17 @@
 # without warranties or conditions of any kind, either express or implied.
 # see the license for the specific language governing permissions and
 # limitations under the license.
+from Queue import Empty
 
 import datetime
+import threading
 import time
 import traceback
-from threading import Thread
-from rdc.etl import TICK
+from rdc.etl import TICK, STATUS_PERIOD
 from rdc.etl.harness.base import BaseHarness
 from rdc.etl.hash import Hash
-from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End
+from rdc.etl.io import InactiveReadableError, IO_TYPES, DEFAULT_INPUT_CHANNEL, DEFAULT_OUTPUT_CHANNEL, Begin, End, \
+    STDERR
 from rdc.etl.transform import Transform
 
 class _IntSequenceGenerator(object):
@@ -38,7 +40,7 @@ class _IntSequenceGenerator(object):
         return self.current
 
 
-class TransformThread(Thread):
+class TransformThread(threading.Thread):
     """Thread encapsulating a transformation. Handle errors."""
 
     __thread_counter = _IntSequenceGenerator()
@@ -47,34 +49,53 @@ class TransformThread(Thread):
         super(TransformThread, self).__init__(group, target, name, args, kwargs, verbose)
         self.transform = transform
         self.__thread_number = self.__class__.__thread_counter.next()
+        self._stop = threading.Event()
 
     def handle_error(self, exc, tb):
-        print str(exc) + '\n\n' + tb + '\n\n\n\n'
+        if STDERR in self.transform.OUTPUT_CHANNELS:
+            self.transform._output.put(({
+                'transform': self.transform,
+                'exception': exc,
+                'traceback': tb,
+                }, STDERR, ))
+        else:
+            print str(exc) + '\n\n' + tb + '\n\n\n\n'
 
     @property
     def name(self):
         return self.transform.__name__ + '-' + str(self.__thread_number)
 
     def run(self):
-        while True:
+        while not self.stopped:
             try:
                 self.transform.step()
             except KeyboardInterrupt as e:
-                # todo send signal to harness, clean stop required. Needed ? read about threads and interrupt, only main may receive this.
-                break
-            except InactiveReadableError, e:
+                raise
+            except InactiveReadableError as e:
                 # Terminated, exit loop.
                 break
-            except Exception, e:
+            except Empty as e:
+                continue
+            except Exception as e:
                 self.handle_error(e, traceback.format_exc())
 
         try:
             self.transform.step(finalize=True)
-        except InactiveReadableError, e:
+        except (Empty, InactiveReadableError) as e:
             # Obviously, ignore.
             pass
         except Exception, e:
             self.handle_error(e, traceback.format_exc())
+
+    def stop(self):
+        self._stop.set()
+        time.sleep(2)
+        # xxx I do not want to do this. But really, what are my options ?
+        self._Thread__stop()
+
+    @property
+    def stopped(self):
+        return self._stop.isSet()
 
     def __repr__(self):
         """Adds "alive" information to the transform representation."""
@@ -90,6 +111,7 @@ class ThreadedHarness(BaseHarness):
         self.profile = profile
         self.status = []
         self._transforms = {}
+        self._transform_indexes = {}
         self._threads = {}
         self._current_id = _IntSequenceGenerator()
         self._started_at = None
@@ -111,9 +133,14 @@ class ThreadedHarness(BaseHarness):
 
     def add(self, transform):
         """Register a transformation, create a thread object to manage its future lifecycle."""
-        id = self._current_id.next()
-        self._transforms[id] = transform
-        self._threads[id] = TransformThread(transform)
+        t_ident = id(transform)
+
+        if not t_ident in self._transform_indexes:
+            id_ = self._current_id.next()
+            self._transforms[id_] = transform
+            self._transform_indexes[t_ident] = id_
+            self._threads[id_] = TransformThread(transform)
+
         return transform # BC, maybe id would be a better thing to return (todo 2.0, or even 1.0 before api freeze)
 
     def validate(self):
@@ -139,6 +166,8 @@ class ThreadedHarness(BaseHarness):
         for status in self.status:
             status.initialize(self, debug=self.debug, profile=self.profile)
 
+        status_index = 0
+        interrupted = False
         # main loop until all threads are done
         while True:
             try:
@@ -147,8 +176,12 @@ class ThreadedHarness(BaseHarness):
                     is_alive = is_alive or thread.is_alive()
 
                 # communicate with the world
-                for status in self.status:
-                    status.update(self, debug=self.debug, profile=self.profile)
+                if status_index <= 0:
+                    for status in self.status:
+                        status.update(self, debug=self.debug, profile=self.profile)
+                    status_index = STATUS_PERIOD
+
+                status_index -= 1
 
                 # exit point
                 if not is_alive:
@@ -158,17 +191,21 @@ class ThreadedHarness(BaseHarness):
                 # threads finished.
                 time.sleep(TICK)
             except KeyboardInterrupt as e:
-                # todo cleaner stop ?
+                interrupted = True
+                for id, thread in self._threads.items():
+                    if thread.is_alive():
+                        thread.stop()
                 break
 
         # run finalization methods for statuses
         for status in self.status:
             status.finalize(self, debug=self.debug, profile=self.profile)
+        if interrupted:
+            print 'Caught keyboard interrupt (Ctrl-C), stopping threads ...'
 
         # Wait for all transform threads to die
         for id, thread in self._threads.items():
             thread.join()
-
 
     def add_chain(self, *transforms, **kwargs):
         """Main helper method to add chains of transforms to this harness. You can plug the whole chain from and to
@@ -178,11 +215,12 @@ class ThreadedHarness(BaseHarness):
 
         >>> h = ThreadedHarness()
         >>> t1, t2, t3 = Transform(), Transform(), Transform()
-        >>> h.add_chain(t1, t2, t3)
+        >>> h.add_chain(t1, t2, t3) #doctest: +ELLIPSIS
+        <rdc.etl.harness.threaded.ThreadedHarness object at 0x...>
 
         """
         if not len(transforms):
-            raise Exception('At least one transform should be provided to form a chain.')
+            return self
 
         input, output, input_channel, output_channel = None, None, None, None
 
@@ -215,6 +253,9 @@ class ThreadedHarness(BaseHarness):
         if output:
             # output contains the input we will plug our output into.
             self.__plug(last_transform._output, 0, output, output_channel)
+
+        # fluid api
+        return self
 
     # Private stuff.
 

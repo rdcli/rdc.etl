@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from sqlalchemy.exc import OperationalError
 
 from rdc.etl.io import STDIN
 from rdc.etl.transform import Transform
@@ -20,31 +21,41 @@ from rdc.etl.transform import Transform
 
 class DatabaseCreateTable(Transform):
     table_name = None
+    table_options = ''
     structure = ()
     drop_if_exists = False
 
-    def __init__(self, engine, table_name=None, structure=None, drop_if_exists=None):
+    def __init__(self, engine, table_name=None, structure=None, drop_if_exists=None, table_options=None):
         super(DatabaseCreateTable, self).__init__()
 
         self.engine = engine
         self.table_name = table_name or self.table_name
         self.structure = structure or self.structure
         self.drop_if_exists = drop_if_exists or self.drop_if_exists
+        self.table_options = table_options or self.table_options
         self._executed = False
 
     def transform(self, hash, channel=STDIN):
         # this is a bit counterproductive, should tell that we don't change the flux, or delegate this to databaseload
         # or something
-        if not self._executed:
-            if self.drop_if_exists:
-                query = 'DROP TABLE IF EXISTS %s;' % (self.table_name, )
-                self.engine.execute(query)
+        try:
+            if not self._executed:
+                if self.drop_if_exists:
+                    query = 'DROP TABLE %s;' % (self.table_name, )
+                    try:
+                        self.engine.execute(query)
+                    except (OperationalError, ) as e:
+                        pass # Table cannot be dropped, it probably does not exist
 
-            query = 'CREATE TABLE %s (%s)' % (
-                self.table_name,
-                ', \n'.join(['%s %s' % (n, t) for n, t in self.structure])
-            )
-            self.engine.execute(query)
+                query = 'CREATE TABLE %s (%s) %s;' % (
+                    self.table_name,
+                    ', \n'.join(['%s %s' % (n, t) for n, t in self.structure]),
+                    self.table_options
+                )
+                try:
+                    self.engine.execute(query)
+                except (OperationalError, ) as e:
+                    pass # Table cannot be created, it probably already exists
+        finally:
             self._executed = True
-        yield hash
-
+            yield hash

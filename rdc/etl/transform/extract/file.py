@@ -19,7 +19,7 @@ import datetime
 
 from rdc.etl import DEFAULT_FIELD
 from rdc.etl.transform.extract import Extract
-from rdc.etl.util import create_http_reader, create_file_reader, cached_property
+from rdc.etl.util import create_http_reader, create_file_reader, cached_property, create_ftp_reader
 
 
 class FileExtract(Extract):
@@ -51,6 +51,8 @@ class FileExtract(Extract):
 
         if self.uri.find('http://') == 0 or self.uri.find('https://') == 0:
             return create_http_reader(self.uri)
+        elif self.uri.find('ftp://') == 0:
+            return create_ftp_reader(self.uri)
         else:
             return create_file_reader(self.uri)
 

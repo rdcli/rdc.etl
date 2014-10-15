@@ -17,8 +17,10 @@
 import time
 from abc import ABCMeta, abstractmethod
 from copy import copy
-from Queue import Queue
+from Queue import Queue, Empty
 import itertools
+import datetime
+from rdc.etl import TICK
 from rdc.etl.error import AbstractError, InactiveReadableError, InactiveWritableError
 from rdc.etl.hash import Hash
 
@@ -120,10 +122,11 @@ class InputMultiplexer(IReadable, Statisticable):
         stats = itertools.chain(self._stats.iteritems(), self._special_stats.iteritems())
         return ((CHANNEL_NAMES[INPUT_TYPE][channel], stat) for channel, stat in stats)
 
-    def get(self, block=True, timeout=True):
+    def get(self, block=True, timeout=None):
         """Gets a (data, channel) tuple from the first queue ready for it.
         """
-        # todo documentation says .enpty() value is not reliable ... XXX
+        # todo documentation says .empty() value is not reliable ... XXX
+        started_at = datetime.datetime.now()
         while self.alive:
             for id, queue in self.queues.items():
                 if queue.alive and not queue.empty():
@@ -137,7 +140,10 @@ class InputMultiplexer(IReadable, Statisticable):
                     return data, id
 
             # todo xxx take block and timeout into account
-            time.sleep(0.2)
+            if timeout and (datetime.datetime.now() - started_at > datetime.timedelta(seconds=timeout)):
+                raise Empty('Timeout exceeded.')
+
+            time.sleep(TICK)
 
         raise InactiveReadableError('InputMultiplexer is terminated.')
 
@@ -211,11 +217,14 @@ class OutputDemultiplexer(IWritable, Statisticable):
     def __demux(self, data):
         if isinstance(data, Hash):
             return data, DEFAULT_OUTPUT_CHANNEL
+
         if len(data) == 1:
             return data, DEFAULT_OUTPUT_CHANNEL
+
         if len(data) == 2:
             return data[0], data[1]
-        raise ValueError('Unintelligible message.')
+
+        return data, DEFAULT_OUTPUT_CHANNEL
 
 
 class Input(Queue, IReadable, IWritable):
