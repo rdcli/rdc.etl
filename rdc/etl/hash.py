@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from collections import OrderedDict
 from copy import copy
 
@@ -68,6 +69,11 @@ class Hash(OrderedDict):
     # BC
     def set(self, k, v):
         self[k] = v
+        return self
+
+    def rename(self, key, newkey, dict_setitem=dict.__setitem__):
+        # BUG does not keep order
+        self[newkey] = self.pop(key)
         return self
 
     def __repr__(self, _repr_running={}):

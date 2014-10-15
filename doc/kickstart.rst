@@ -1,14 +1,25 @@
 Kickstart
 =========
 
-A fast 4 step overview to get you kickstarted into rdc.etl.
+To get started, you should also read pragmatic examples in the :doc:`cookbook/index`.
 
 
-Create transformations
-::::::::::::::::::::::
+Create an empty project
+:::::::::::::::::::::::
 
-Extract some data ...
----------------------
+If you want to bootstrap an ETL project on your computer, you can now do it using the provided PasteScript template.
+
+.. code-block:: shell
+
+    pip install PasteScript
+    paster create -t etl_project MyProject
+
+
+Overview of concepts
+::::::::::::::::::::
+
+Extract
+-------
 
 ``Extract`` is a flexible base class to write extract transformations. We use a generator here, real life
 would usually use databases, webservices, files ...
@@ -25,8 +36,8 @@ would usually use databases, webservices, files ...
 
 :doc:`For more informations, see the extracts reference <transform/reference/extract>`.
 
-Distort it ...
---------------
+Transform
+---------
 
 ``Transform`` is a flexible base class for all kind of transformations.
 
@@ -43,8 +54,8 @@ Distort it ...
 
 :doc:`For more informations, see the transformations reference <transform/index>`.
 
-Load it ...
------------
+Load
+----
 
 We'll use the screen as our load target ...
 
@@ -64,37 +75,34 @@ We'll use the screen as our load target ...
     default input channel), but we'll use it as such for demonstration purpose.
 
 
-Build your harness
-::::::::::::::::::
+Run
+:::
+
+Let's create a ``Job``. It will be used to:
 
 * Connect transformations
-* Runnable
-* Manage threading
+* Manage threads
+* Monitor execution
 
 .. code-block:: python
 
-    from rdc.etl.harness.threaded import ThreadedHarness as Harness
+    from rdc.etl.job import Job
 
-    harness = Harness()
+    job = Job()
 
 
-Tie transformations together
-::::::::::::::::::::::::::::
-
-The ``Harness`` has a ``add_chain()`` method that can be used to easily plug a list of ordered transformations together.
+The ``Job`` has a ``add_chain()`` method that can be used to easily plug a list of ordered transformations together.
 
 .. code-block:: python
 
-    harness.add_chain(my_extract, my_transform, my_load)
+    job.add_chain(my_extract, my_transform, my_load)
 
-
-Run the job
-:::::::::::
 
 Our job is ready, you can run it.
 
 .. code-block:: python
 
-    harness()
+    job()
 
+:doc:`For more informations, see the jobs documentation <job>`.
 

@@ -8,5 +8,5 @@ Loads
 DatabaseLoad
 ::::::::::::
 
-.. module:: rdc.etl.transform.load.database
+.. module:: rdc.etl.extra.db.load
 .. autoclass:: DatabaseLoad

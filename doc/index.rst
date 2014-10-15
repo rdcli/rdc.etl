@@ -14,11 +14,12 @@ there is no wysiwyg editor provided.
 
    install
    kickstart
-   harness
+   job
    transform/index
    filesystem
    database
    status
+   cookbook/index
    contribute
 
 Indices and tables

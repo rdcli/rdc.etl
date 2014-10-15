@@ -102,9 +102,11 @@ class ThreadedHarness(BaseHarness):
         return result
 
     def get_threads(self):
+        """Returns attached threads."""
         return self._threads.items()
 
     def get_transforms(self):
+        """Returns attached transorms."""
         return self._transforms.items()
 
     def add(self, transform):

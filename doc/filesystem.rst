@@ -8,7 +8,7 @@ You can use FileExtract to read a file into a field.
 .. code-block:: python
 
     t = FileExtract('/tmp/filename', output_field='_content')
-    harness.add_chain(t)
+    job.add_chain(t)
 
 If you don't need to keep a lot of different things, you can use the default output_field (subject, context) that is
 ``_``. It can be handy as transforms that only act on one field will read this one by default.
@@ -17,4 +17,4 @@ If you don't need to keep a lot of different things, you can use the default out
 
     t1 = FileExtract('/tmp/file.csv')
     t2 = CsvMap()
-    harness.add_chain(t1, t2)
+    job.add_chain(t1, t2)
