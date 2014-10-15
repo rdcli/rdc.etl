@@ -215,7 +215,8 @@ class ThreadedHarness(BaseHarness):
 
         >>> h = ThreadedHarness()
         >>> t1, t2, t3 = Transform(), Transform(), Transform()
-        >>> h.add_chain(t1, t2, t3)
+        >>> h.add_chain(t1, t2, t3) #doctest: +ELLIPSIS
+        <rdc.etl.harness.threaded.ThreadedHarness object at 0x...>
 
         """
         if not len(transforms):
