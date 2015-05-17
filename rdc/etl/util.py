@@ -283,7 +283,20 @@ def sbool(mixed, default=None):
         return default
 
 # Exports
-terminal = _Terminal()
+try:
+    terminal = _Terminal()
+except:
+    class FakeTerminal(object):
+        clear_eol = ''
+        move_up = ''
+        is_a_tty = False
+        def __call__(self, *args):
+            return ''.join(*args)
+        def __getattr__(self, item):
+            return self
+    terminal = FakeTerminal()
+
+
 html_escape = cgi.escape
 def html_unescape(txt):
     if not isinstance(txt, unicode):
