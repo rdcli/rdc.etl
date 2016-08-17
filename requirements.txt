@@ -4,7 +4,7 @@ BeautifulSoup==3.2.1
 requests==2.11.0 # HTTP without headaches
 unidecode==0.04.19 # Transcoding
 webob==1.6.1 # Webapp2 dependency
-webapp2            # Basic web tools
+webapp2==2.5.2 # Basic web tools
 sqlalchemy==1.0.14 # DBAL
 blessings==1.6 # Readable console & tty detection
 psutil==4.3.0 # memory consumption
