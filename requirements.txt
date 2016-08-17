@@ -8,4 +8,4 @@ webapp2            # Basic web tools
 sqlalchemy==1.0.14 # DBAL
 blessings==1.6 # Readable console & tty detection
 psutil==4.3.0 # memory consumption
-repoze.lru         # lru_cache for python 2.6+
+repoze.lru==0.6 # lru_cache for python 2.6+
