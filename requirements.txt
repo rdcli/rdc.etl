@@ -1,5 +1,5 @@
 rdc.common==0.1.0
-lxml               # XML Processing
+lxml==3.6.1 # XML Processing
 BeautifulSoup==3.2.1
 requests           # HTTP without headaches
 unidecode==0.04.19 # Transcoding
