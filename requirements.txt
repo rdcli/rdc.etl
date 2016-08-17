@@ -5,7 +5,7 @@ requests           # HTTP without headaches
 unidecode==0.04.19 # Transcoding
 webob              # Webapp2 dependency
 webapp2            # Basic web tools
-sqlalchemy         # DBAL
+sqlalchemy==1.0.14 # DBAL
 blessings==1.6 # Readable console & tty detection
 psutil==4.3.0 # memory consumption
 repoze.lru         # lru_cache for python 2.6+
