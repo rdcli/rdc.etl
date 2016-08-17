@@ -6,6 +6,6 @@ unidecode          # Transcoding
 webob              # Webapp2 dependency
 webapp2            # Basic web tools
 sqlalchemy         # DBAL
-blessings          # Readable console & tty detection
+blessings==1.6 # Readable console & tty detection
 psutil             # memory consumption
 repoze.lru         # lru_cache for python 2.6+
