@@ -1,7 +1,7 @@
 rdc.common==0.1.0
 lxml==3.6.1 # XML Processing
 BeautifulSoup==3.2.1
-requests           # HTTP without headaches
+requests==2.11.0 # HTTP without headaches
 unidecode==0.04.19 # Transcoding
 webob==1.6.1 # Webapp2 dependency
 webapp2            # Basic web tools
