@@ -2,7 +2,7 @@ rdc.common==0.1.0
 lxml               # XML Processing
 BeautifulSoup
 requests           # HTTP without headaches
-unidecode          # Transcoding
+unidecode==0.04.19 # Transcoding
 webob              # Webapp2 dependency
 webapp2            # Basic web tools
 sqlalchemy         # DBAL
