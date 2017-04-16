@@ -3,6 +3,8 @@ rdc.etl
 
 Extract Transform Load (ETL) toolkit for python.
 
+`Looking for an ETL for python 3.5+? Discover Bonobo.<https://www.bonobo-project.org/>`_
+
 DIY framework to create multithreaded python callables that can transform any stream(s) of key/value lists into any
 other stream(s).
 
