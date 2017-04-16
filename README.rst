@@ -9,7 +9,12 @@ integration jobs from simple atomic io-connected transformation blocks.
 .. image:: https://api.travis-ci.org/rdcli/rdc.etl.png
   :target: https://travis-ci.org/rdcli/rdc.etl
   :alt: Build Status
+  
+We started to repackage this for modern python using a similar but cleaner and simpler API. This package is called Bonobo.
 
+* `ETL in python 3.5+ <https://www.bonobo-project.org/>`_
+* `Bonobo on GitHub <https://github.com/python-bonobo/bonobo>`_
+* `Bonobo on ReadTheDocs <http://docs.bonobo-project.org/>`_
 
 Documentation
 -------------
